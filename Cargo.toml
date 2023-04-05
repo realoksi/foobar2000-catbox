@@ -1,0 +1,10 @@
+[package]
+name = "foobar2000-catbox"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies.curl]
+version = "0.4.44"
+
+[dependencies.image]
+version="0.24.6"
