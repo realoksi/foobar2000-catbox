@@ -16,6 +16,7 @@ impl Handler for ResponseBody {
 
 fn main() {
     const URL: &str = "https://catbox.moe/user/api.php";
+    const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0";
     // const THRESHOLD: usize = 131072; // 128 KiB, see https://github.com/TheQwertiest/foo_discord_rich/pull/37#issuecomment-1464970437.
 
     let input = io::stdin()
@@ -67,6 +68,7 @@ fn main() {
 
     let mut headers = List::new();
     headers.append("Content-Type: multipart/form-data").unwrap();
+    headers.append(format!("User-Agent: {}", USER_AGENT).as_str()).unwrap();
     easy.url(URL).unwrap();
     easy.http_headers(headers).unwrap();
     easy.httppost(form).unwrap();
