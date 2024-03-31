@@ -21,5 +21,4 @@ flowchart TD
 
 ## TODO
 - [x] make a really cool flowchart
-- [ ] guide to installation and usage
 - [ ] automatic compression/downscaling
