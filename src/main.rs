@@ -1,6 +1,11 @@
-use std::{fs, io, path::Path, process::exit};
+use std::{
+    io::{self, Cursor},
+    path::Path,
+    process::exit,
+};
 
 use curl::easy::{Easy2, Form, Handler, List, WriteError};
+use image::imageops::FilterType;
 
 struct ResponseBody(Vec<u8>);
 
@@ -12,11 +17,10 @@ impl Handler for ResponseBody {
     }
 }
 
-// TODO: Use the image crate to resize/compress an image when its size exceeds a specified threshold.
-
 fn main() {
     const URL: &str = "https://catbox.moe/user/api.php";
-    const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0";
+    const USER_AGENT: &str =
+        "Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0";
     // const THRESHOLD: usize = 131072; // 128 KiB, see https://github.com/TheQwertiest/foo_discord_rich/pull/37#issuecomment-1464970437.
 
     let input = io::stdin()
@@ -36,31 +40,20 @@ fn main() {
 
     let file_name = file_path.file_name().unwrap().to_str().unwrap();
 
-    let image_buffer = match fs::read(&file_path) {
-        Ok(buffer) => buffer,
-        Err(e) => {
-            eprintln!("Failed to read file {}: {}", file_name, e);
-            exit(-1);
-        }
-    };
+    let img = image::open(file_path).unwrap();
 
-    let mime_type = match image::guess_format(&image_buffer) {
-        Ok(format) => {
-            let extension = format.extensions_str().first().unwrap_or(&"");
-            format!("image/{}", extension)
-        }
-        Err(_) => {
-            eprintln!("Couldn't determine a mimetype type for this file.");
-            exit(-1);
-        }
-    };
+    img.resize(512, 512, FilterType::Nearest); // TODO When should and when should we not resize an image?
+
+    let mut buffer: Vec<u8> = Vec::new();
+    img.write_to(&mut Cursor::new(&mut buffer), image::ImageFormat::Jpeg)
+        .unwrap();
 
     let mut form = Form::new();
     form.part("reqtype").contents(b"fileupload").add().unwrap();
     form.part("userhash").contents(b"").add().unwrap();
     form.part("fileToUpload")
-        .content_type(&mime_type)
-        .buffer(&file_name, image_buffer)
+        .content_type("image/jpeg")
+        .buffer(&file_name, buffer)
         .add()
         .unwrap();
 
@@ -68,7 +61,9 @@ fn main() {
 
     let mut headers = List::new();
     headers.append("Content-Type: multipart/form-data").unwrap();
-    headers.append(format!("User-Agent: {}", USER_AGENT).as_str()).unwrap();
+    headers
+        .append(format!("User-Agent: {}", USER_AGENT).as_str())
+        .unwrap();
     easy.url(URL).unwrap();
     easy.http_headers(headers).unwrap();
     easy.httppost(form).unwrap();
