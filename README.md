@@ -6,18 +6,18 @@ Uploads cover art to <https://catbox.moe/> using their API and prints the result
 
 ## 📝 Configuration file [Optional]
 
-We're using a very primitive algorithm to parse key value pairs from a basic `config.txt` file to allow fine tuning of the output without having to recompile the application. It reads this file line by line, separating key value pairs using `=` as the delimiter. You don't need to include it at all, nor do you need to define every value. When a key isn't defined or is defined improperly, it will always fallback to the default value. Consider this when modifying these values, to be sure they are not malformed.
+We're using a very primitive algorithm to parse key value pairs from a `config.txt` file to allow fine tuning of the output without having to recompile the application. It reads this file line by line, separating key value pairs using `=` as the delimiter. You don't need to include it at all, nor do you need to define every value. When a key isn't defined or is defined improperly, it will always fallback to the default value. Consider this when modifying these values, to be sure they are not malformed.
 
 Here's a table showing all of the possible keys and their default values.
 | Name | Default Value | Description |
 | - | - | - |
-| MAX_WIDTH | 500 | The width of the image will always be clamped to at most this size in pixels.|
-| MAX_HEIGHT | 500 | The height of the image will always be clamped to at most this size in pixels. |
-| QUALITY | 80 | A percentage of quality to retain. Higher looks better but is larger and slower, whereas lower looks worse but is faster. |
-| USER_AGENT | Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0 | See [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent) for a description of this header. We need to send this with the POST request or else the default endpoint [catbox.moe](https://catbox.moe/) will kill the connection. |
-| ENDPOINT | <https://catbox.moe/user/api.php> | The endpoint is where we send the POST request. |
+| MAX_WIDTH | 500 | A number, the width of the image will always be clamped to at most this width in pixels.|
+| MAX_HEIGHT | 500 | A number, the height of the image will always be clamped to at most this height in pixels. |
+| QUALITY | 80 | A number, the percentage of quality to retain. Higher looks better but has a larger file size and is slower, whereas lower looks worse but has a smaller file size and is faster. |
+| USER_AGENT | Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0 | A string, see [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent) for a description of this header. We need to send this with the POST request or else the default endpoint [catbox.moe](https://catbox.moe/) will kill the connection. This is out of our control, see issue #4. |
+| ENDPOINT | <https://catbox.moe/user/api.php> | A string, the destination of our POST request. Since the form is designed to work with the format specified by the [tool API section on catbox](https://catbox.moe/tools.php), it's unlikely you'll be able to change this. |
 
-To use this file, create one with the keys and values you want to modify
+Place or create a file named `config.txt` next to the `foobar2000-catbox.exe` executable. See the example [config.txt](config.txt) in this repository.
 
 ## 📊 Application flow
 
