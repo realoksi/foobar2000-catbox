@@ -5,7 +5,7 @@ use std::{
 };
 
 use curl::easy::{Easy2, Form, Handler, List, WriteError};
-use image::imageops::FilterType;
+use image::codecs::jpeg::JpegEncoder;
 
 struct ResponseBody(Vec<u8>);
 
@@ -21,7 +21,9 @@ fn main() {
     const URL: &str = "https://catbox.moe/user/api.php";
     const USER_AGENT: &str =
         "Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0";
-    // const THRESHOLD: usize = 131072; // 128 KiB, see https://github.com/TheQwertiest/foo_discord_rich/pull/37#issuecomment-1464970437.
+    // const THRESHOLD: usize = 2097152; // 2MiB
+    const CONSTRAIN: u32 = 500; // Image height/width to always constrain to.
+    const QUALITY: u8 = 80; // Image quality percentage
 
     let input = io::stdin()
         .lines()
@@ -40,12 +42,26 @@ fn main() {
 
     let file_name = file_path.file_name().unwrap().to_str().unwrap();
 
-    let img = image::open(file_path).unwrap();
+    let file_buffer = match std::fs::read(&file_path) {
+        Ok(buffer) => buffer,
+        Err(e) => {
+            eprintln!("Failed to read file {}: {}", file_name, e);
+            exit(-1);
+        }
+    };
 
-    img.resize(512, 512, FilterType::Nearest); // TODO When should and when should we not resize an image?
+    let image_buffer = image::load_from_memory(&file_buffer).unwrap();
 
-    let mut buffer: Vec<u8> = Vec::new();
-    img.write_to(&mut Cursor::new(&mut buffer), image::ImageFormat::Jpeg)
+    let resize_buffer = if image_buffer.width() > CONSTRAIN || image_buffer.height() > CONSTRAIN {
+        image_buffer.resize(CONSTRAIN, CONSTRAIN, image::imageops::FilterType::Nearest)
+    } else {
+        image_buffer
+    };
+
+    let mut cursor = Cursor::new(Vec::new());
+
+    JpegEncoder::new_with_quality(&mut cursor, QUALITY)
+        .encode_image(&resize_buffer)
         .unwrap();
 
     let mut form = Form::new();
@@ -53,7 +69,7 @@ fn main() {
     form.part("userhash").contents(b"").add().unwrap();
     form.part("fileToUpload")
         .content_type("image/jpeg")
-        .buffer(&file_name, buffer)
+        .buffer(&file_name, cursor.into_inner())
         .add()
         .unwrap();
 
