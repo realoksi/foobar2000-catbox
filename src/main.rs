@@ -1,5 +1,5 @@
 use std::{
-    io::{self, Cursor},
+    io::{self, BufRead, Cursor},
     path::Path,
     process::exit,
 };
@@ -17,6 +17,14 @@ impl Handler for ResponseBody {
     }
 }
 
+mod error {
+    pub const FILE_NOT_FOUND: i32 = 1;
+    pub const FILE_SYSTEM_READ_ERROR: i32 = 2;
+    pub const IMAGE_LOADING_ERROR: i32 = 3;
+    pub const IMAGE_ENCODING_ERROR: i32 = 4;
+    pub const HTTP_REQUEST_ERROR: i32 = 5;
+}
+
 fn main() {
     const URL: &str = "https://catbox.moe/user/api.php";
     const USER_AGENT: &str =
@@ -25,7 +33,8 @@ fn main() {
     const CONSTRAIN: u32 = 500; // Image height/width to always constrain to.
     const QUALITY: u8 = 80; // Image quality percentage
 
-    let input = io::stdin()
+    let input: String = io::stdin()
+        .lock()
         .lines()
         .next()
         .unwrap()
@@ -33,38 +42,43 @@ fn main() {
         .trim()
         .to_string();
 
-    let file_path = Path::new(&input);
+    let file_path: &Path = Path::new(&input);
 
     if !file_path.exists() {
         eprintln!("{:?} doesn't exist.", file_path.as_os_str());
-        exit(-1);
+        exit(error::FILE_NOT_FOUND);
     }
 
-    let file_name = file_path.file_name().unwrap().to_str().unwrap();
+    let file_name: &str = file_path.file_name().unwrap().to_str().unwrap();
 
-    let file_buffer = match std::fs::read(&file_path) {
-        Ok(buffer) => buffer,
-        Err(e) => {
-            eprintln!("Failed to read file {}: {}", file_name, e);
-            exit(-1);
-        }
-    };
+    let file_buffer: Vec<u8> = std::fs::read(&file_path).unwrap_or_else(|_| {
+        eprintln!("Failed to read from filesystem");
+        exit(error::FILE_SYSTEM_READ_ERROR);
+    });
 
-    let image_buffer = image::load_from_memory(&file_buffer).unwrap();
+    let image_buffer: image::DynamicImage =
+        image::load_from_memory(&file_buffer).unwrap_or_else(|_| {
+            eprintln!("Failed to load image from memory");
+            exit(error::IMAGE_LOADING_ERROR);
+        });
 
-    let resize_buffer = if image_buffer.width() > CONSTRAIN || image_buffer.height() > CONSTRAIN {
-        image_buffer.resize(CONSTRAIN, CONSTRAIN, image::imageops::FilterType::Nearest)
-    } else {
-        image_buffer
-    };
+    let resize_buffer: image::DynamicImage =
+        if image_buffer.width() > CONSTRAIN || image_buffer.height() > CONSTRAIN {
+            image_buffer.resize(CONSTRAIN, CONSTRAIN, image::imageops::FilterType::Nearest)
+        } else {
+            image_buffer
+        };
 
-    let mut cursor = Cursor::new(Vec::new());
+    let mut cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
 
     JpegEncoder::new_with_quality(&mut cursor, QUALITY)
         .encode_image(&resize_buffer)
-        .unwrap();
+        .unwrap_or_else(|_| {
+            eprintln!("Failed to encode image");
+            exit(error::IMAGE_ENCODING_ERROR);
+        });
 
-    let mut form = Form::new();
+    let mut form: Form = Form::new();
     form.part("reqtype").contents(b"fileupload").add().unwrap();
     form.part("userhash").contents(b"").add().unwrap();
     form.part("fileToUpload")
@@ -73,13 +87,13 @@ fn main() {
         .add()
         .unwrap();
 
-    let mut easy = Easy2::new(ResponseBody(Vec::new()));
-
-    let mut headers = List::new();
+    let mut headers: List = List::new();
     headers.append("Content-Type: multipart/form-data").unwrap();
     headers
         .append(format!("User-Agent: {}", USER_AGENT).as_str())
         .unwrap();
+
+    let mut easy: Easy2<ResponseBody> = Easy2::new(ResponseBody(Vec::new()));
     easy.url(URL).unwrap();
     easy.http_headers(headers).unwrap();
     easy.httppost(form).unwrap();
@@ -90,7 +104,7 @@ fn main() {
         }
         Err(e) => {
             eprintln!("{}", e);
-            exit(-1);
+            exit(error::HTTP_REQUEST_ERROR);
         }
     }
 }
