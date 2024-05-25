@@ -7,7 +7,7 @@ This application takes an image path as input, downscales and compressed the ima
 ## 🔗 Links
 
 - [Configuration file](#-configuration-file-optional)
-- [Application flow](#-application-flow)
+- [Application flow](#-application-flow-outdated)
 - [TODO](#-todo)
 
 ## 📝 Configuration file [Optional]
