@@ -16,10 +16,12 @@ jobs:
             - name: Cargo cache
               uses: actions/cache@v3
               with:
-                path: ~/.cargo/git
-                key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-                restore-keys: |
-                  ${{ runner.os }}-cargo-index-
+                path: |
+                  ~/.cargo/bin/
+                  ~/.cargo/registry/
+                  ~/.cargo/git/
+                key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+                restore-keys: ${{ runner.os }}-cargo-
             - name: Compile the application
               run: cargo build
             - name: Run multiple samples
