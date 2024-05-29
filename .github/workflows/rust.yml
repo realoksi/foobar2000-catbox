@@ -18,5 +18,5 @@ jobs:
             - name: Run multiple samples
               run: |
                 for sample in ./samples/*.jpg; do
-                  echo "$sample" | ./target/release/foobar2000-catbox
+                  echo "$sample" | ./target/debug/foobar2000-catbox
                 done
