@@ -11,9 +11,9 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - name: Checkout from repository
+            - name: 📋 Checkout from repository
               uses: actions/checkout@v4
-            - name: Cargo cache
+            - name: 🗄️ Cargo cache
               uses: actions/cache@v3
               with:
                 path: |
@@ -22,10 +22,17 @@ jobs:
                   ~/.cargo/git/
                 key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                 restore-keys: ${{ runner.os }}-cargo-
-            - name: Compile the application
+            - name: 🛠️ Compile the application
               run: cargo build
-            - name: Run multiple samples
+            - name: 🧪 Run multiple samples
               run: |
                 for sample in ./samples/*.jpg; do
-                  echo "$sample" | ./target/debug/foobar2000-catbox
+                  stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
+                  echo "$output "
+                  if [[ $stdout =~ ^https:\/\/files.catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
+                    echo "🎉 Yes"
+                  else
+                    echo "😥 No"
+                    exit 1
+                  fi
                 done
