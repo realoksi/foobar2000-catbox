@@ -1,0 +1,19 @@
+name: Rust
+
+on:
+    push:
+        branches: ["development"]
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout from repository
+              uses: actions/checkout@v4
+            - name: Compile the application
+              run: cargo build
+            - name: Run with samples
+              run: echo "./samples/1205.jpg" | ./target/debug/foobar2000-catbox
