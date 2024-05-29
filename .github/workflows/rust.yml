@@ -28,11 +28,10 @@ jobs:
               run: |
                 for sample in ./samples/*.jpg; do
                   stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
-                  echo "$output "
                   if [[ $stdout =~ ^https:\/\/files.catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
-                    echo "🎉 Yes"
+                    echo "$stdout 🎉 Yes"
                   else
-                    echo "😥 No"
+                    echo "$stdout 😥 No"
                     exit 1
                   fi
                 done
