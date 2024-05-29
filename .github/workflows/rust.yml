@@ -13,6 +13,13 @@ jobs:
         steps:
             - name: Checkout from repository
               uses: actions/checkout@v4
+            - name: Cargo cache
+              uses: actions/cache@v3
+              with:
+                path: ~/.cargo/git
+                key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+                restore-keys: |
+                  ${{ runner.os }}-cargo-index-
             - name: Compile the application
               run: cargo build
             - name: Run multiple samples
