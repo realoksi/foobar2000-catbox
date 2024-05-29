@@ -33,5 +33,6 @@ jobs:
                   else
                     echo "$stdout 😥 No"
                     exit 1
+                  echo "✨ All samples were successfully uploaded"
                   fi
                 done
