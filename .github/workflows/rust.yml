@@ -15,5 +15,8 @@ jobs:
               uses: actions/checkout@v4
             - name: Compile the application
               run: cargo build
-            - name: Run with samples
-              run: echo "./samples/1205.jpg" | ./target/debug/foobar2000-catbox
+            - name: Run multiple samples
+              run: |
+                for sample in ./samples/*.jpg; do
+                  echo "$sample" | ./target/release/foobar2000-catbox
+                done
