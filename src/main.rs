@@ -7,6 +7,7 @@ use std::{
     process::exit,
 };
 
+use audiotags::{AudioTag, Tag};
 use curl::easy::{Easy2, Form, Handler, List, WriteError};
 use image::codecs::jpeg::JpegEncoder;
 
@@ -22,7 +23,7 @@ impl Handler for ResponseBody {
 
 mod error {
     pub const FILE_NOT_FOUND: i32 = 1;
-    pub const FILE_SYSTEM_READ_ERROR: i32 = 2;
+    // pub const FILE_SYSTEM_READ_ERROR: i32 = 2;
     pub const IMAGE_LOADING_ERROR: i32 = 3;
     pub const IMAGE_ENCODING_ERROR: i32 = 4;
     pub const HTTP_REQUEST_ERROR: i32 = 5;
@@ -102,10 +103,12 @@ fn main() {
 
     let file_name: &str = file_path.file_name().unwrap().to_str().unwrap();
 
-    let file_buffer: Vec<u8> = std::fs::read(&file_path).unwrap_or_else(|_| {
-        eprintln!("Failed to read from filesystem");
-        exit(error::FILE_SYSTEM_READ_ERROR);
-    });
+    let file_buffer: Vec<u8> = Tag::new()
+        .read_from_path(file_path)
+        .and_then(|file_tag: Box<dyn AudioTag + Send + Sync>| {
+            Ok(file_tag.album_cover().unwrap().data.to_vec())
+        })
+        .unwrap_or_else(|_| std::fs::read(&file_path).unwrap());
 
     let image_buffer: image::DynamicImage =
         image::load_from_memory(&file_buffer).unwrap_or_else(|_| {
