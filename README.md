@@ -1,16 +1,12 @@
-# foobar2000-catbox
+## 📰 Quick description
 
-## 📰 Short description
+A helper application to be used with [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) for uploading album artwork to [catbox.moe](https://catbox.moe/).
 
-This application takes an image path as input, downscales and compressed the image in memory, then uploads it to [catbox.moe](https://catbox.moe/) using their API, and finally prints the resulting link to the uploaded image. It's not meant to be started manually, but rather be invoked by this fork of [foo_discord_rich](https://github.com/s0hv/foo_discord_rich) by [s0hv](https://github.com/s0hv) to upload cover art for music.
+## 🚨 Attention
 
-## 🔗 Links
+Previous development was targeted towards a [fork of foo_discord_rich](https://github.com/s0hv/foo_discord_rich). No longer will this be the case, as future development will instead target the [original repository](https://github.com/TheQwertiest/foo_discord_rich) only.
 
-- [Configuration file](#-configuration-file-optional)
-- [Application flow](#-application-flow-outdated)
-- [TODO](#-todo)
-
-## 📝 Configuration file [Optional]
+## 📝 Configuration file [optional]
 
 We're using a very primitive algorithm to parse key value pairs from a `config.txt` file to allow fine tuning of the output without having to recompile the application. It reads this file line by line, separating key value pairs using `=` as the delimiter. You don't need to include it at all, nor do you need to define every value. When a key isn't defined or is defined improperly, it will always fallback to the default value. Consider this when modifying these values, to be sure they are not malformed.
 
@@ -25,21 +21,23 @@ Here's a table showing all of the possible keys and their default values.
 
 Place or create a file named `config.txt` next to the `foobar2000-catbox.exe` executable. See the example [config.txt](config.txt) in this repository.
 
-## 📊 Application flow (🚧Outdated🚧)
+## 📊 Application flow
 
-Here's a small flowchart, for visualizing the flow of the application.
+Here's a small flowchart; A non-precise visualization outlining the flow of the application.
 
 ```mermaid
 flowchart TD
-    A(Application Starts)-->
-    B(Get text from\nstandard input)-->
-    C(File exists?)-.->|No|D(Failure)
-    C-->|Yes|E(Read using image::io)
-    E-->F(Resize to 500px by 500px)
-    F-->G(Write JPG\ninto memory buffer)
-    G-->H(Construct and\nsend POST)
-    H-.->|Not Ok|I(Failure)
-    H-->|Ok|J(Print resulting URL\nto standard output)
+    A(Set up configuration variables)-.->
+    B(Await text from standard input)-.->
+    C(Get file contents into buffer)-.->
+    D(Load buffer into an image object)-.->
+    E(Width or height larger than maximum?)-.->
+    |Yes|F(Resize image object)-.->
+    G(JPEG encode final image object)
+    E-.->|No|G-.->
+    H(Construct multipart form and request with final image)-.->
+    I(Perform POST request)-.->
+    J(Write resulting URL to standard output)
 ```
 
 ## 📋 TODO
@@ -47,4 +45,4 @@ flowchart TD
 - [x] make a really cool flowchart
 - [x] automatic compression/downscaling
 - [x] basic configuration file for quality preferences
-- [ ] installation instructions
+- [x] installation instructions (linked to setup instructions)
