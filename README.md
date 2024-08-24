@@ -46,3 +46,4 @@ flowchart TD
 - [x] automatic compression/downscaling
 - [x] basic configuration file for quality preferences
 - [x] installation instructions (linked to setup instructions)
+- [ ] add small audio samples with embedded artwork
