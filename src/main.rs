@@ -57,7 +57,7 @@ fn main() {
     const DEFAULT_MAX_HEIGHT: u32 = 500;
     const DEFAULT_QUALITY: u8 = 80;
     let default_user_agent: String =
-        "Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0".to_string();
+        "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0".to_string();
     let default_endpoint: String = "https://catbox.moe/user/api.php".to_string();
 
     // Configuration value initialization
