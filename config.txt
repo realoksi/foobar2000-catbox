@@ -1,5 +1,5 @@
 MAX_WIDTH=500
 MAX_HEIGHT=500
 QUALITY=80
-USER_AGENT=Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0
+USER_AGENT=Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0
 ENDPOINT=https://catbox.moe/user/api.php

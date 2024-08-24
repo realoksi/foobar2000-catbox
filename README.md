@@ -1,45 +1,43 @@
-# foobar2000-catbox
+## 📰 Quick description
 
-## 📰 Short description
+A helper application to be used with [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) for uploading album artwork to [catbox.moe](https://catbox.moe/).
 
-This application takes an image path as input, downscales and compressed the image in memory, then uploads it to [catbox.moe](https://catbox.moe/) using their API, and finally prints the resulting link to the uploaded image. It's not meant to be started manually, but rather be invoked by this fork of [foo_discord_rich](https://github.com/s0hv/foo_discord_rich) by [s0hv](https://github.com/s0hv) to upload cover art for music.
+## 🚨 Attention
 
-## 🔗 Links
+Previous development was targeted towards a [fork of foo_discord_rich](https://github.com/s0hv/foo_discord_rich). No longer will this be the case, as future development will instead target the [original repository](https://github.com/TheQwertiest/foo_discord_rich) only.
 
-- [Configuration file](#-configuration-file-optional)
-- [Application flow](#-application-flow-outdated)
-- [TODO](#-todo)
+## 📝 Configuration file [optional]
 
-## 📝 Configuration file [Optional]
+You may include a configuration file for tuning behavior. You don't need to include it at all for basic functionality, nor do you need to define every value. When a key isn't defined or is improper, it will always fallback to the default value.
 
-We're using a very primitive algorithm to parse key value pairs from a `config.txt` file to allow fine tuning of the output without having to recompile the application. It reads this file line by line, separating key value pairs using `=` as the delimiter. You don't need to include it at all, nor do you need to define every value. When a key isn't defined or is defined improperly, it will always fallback to the default value. Consider this when modifying these values, to be sure they are not malformed.
+Again, remember that this is optional. To use, create a file named `config.txt` next to the executable. Check out the example [config.txt](config.txt) in this repository as a base to start with.
 
-Here's a table showing all of the possible keys and their default values.
+See the table below showing all of the possible keys and their default values.
 | Name | Default value | Description |
 | - | - | - |
 | MAX_WIDTH | 500 | A number, the width of the image will always be clamped to at most this width in pixels.|
 | MAX_HEIGHT | 500 | A number, the height of the image will always be clamped to at most this height in pixels. |
 | QUALITY | 80 | A number, the percentage of quality to retain. Higher looks better but has a larger file size and is slower, whereas lower looks worse but has a smaller file size and is faster. |
-| USER_AGENT | Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0 | A string, see [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent) for a description of this header. We need to send this with the POST request or else the default endpoint [catbox.moe](https://catbox.moe/) will kill the connection. This is out of our control, see issue #4. |
+| USER_AGENT | Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0 | A string, see [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent) for a description of this header. We need to send this with the POST request or else the default endpoint [catbox.moe](https://catbox.moe/) will kill the connection. This is out of our control, see issue #4. |
 | ENDPOINT | <https://catbox.moe/user/api.php> | A string, the destination of our POST request. Since the form is designed to work with the format specified by the [tool API section on catbox](https://catbox.moe/tools.php), it's unlikely you'll be able to change this. |
 
-Place or create a file named `config.txt` next to the `foobar2000-catbox.exe` executable. See the example [config.txt](config.txt) in this repository.
+## 📊 Application flow
 
-## 📊 Application flow (🚧Outdated🚧)
-
-Here's a small flowchart, for visualizing the flow of the application.
+Here's a small flowchart; A non-precise visualization outlining the flow of the application.
 
 ```mermaid
 flowchart TD
-    A(Application Starts)-->
-    B(Get text from\nstandard input)-->
-    C(File exists?)-.->|No|D(Failure)
-    C-->|Yes|E(Read using image::io)
-    E-->F(Resize to 500px by 500px)
-    F-->G(Write JPG\ninto memory buffer)
-    G-->H(Construct and\nsend POST)
-    H-.->|Not Ok|I(Failure)
-    H-->|Ok|J(Print resulting URL\nto standard output)
+    A(Set up configuration variables)-.->
+    B(Await text from standard input)-.->
+    C(Get file contents into buffer)-.->
+    D(Load buffer into an image object)-.->
+    E(Width or height larger than maximum?)-.->
+    |Yes|F(Resize image object)-.->
+    G(JPEG encode final image object)
+    E-.->|No|G-.->
+    H(Construct multipart form and request with final image)-.->
+    I(Perform POST request)-.->
+    J(Write resulting URL to standard output)
 ```
 
 ## 📋 TODO
@@ -47,4 +45,5 @@ flowchart TD
 - [x] make a really cool flowchart
 - [x] automatic compression/downscaling
 - [x] basic configuration file for quality preferences
-- [ ] installation instructions
+- [x] installation instructions (linked to setup instructions)
+- [ ] add small audio samples with embedded artwork

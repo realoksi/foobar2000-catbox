@@ -1,0 +1,40 @@
+name: Rust
+
+on:
+    push:
+        branches: ["development"]
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 📋 Checkout from repository
+              uses: actions/checkout@v4
+            - name: 🗄️ Cargo cache
+              uses: actions/cache@v3
+              with:
+                path: |
+                  ~/.cargo/bin/
+                  ~/.cargo/registry/index/
+                  ~/.cargo/registry/cache/
+                  ~/.cargo/git/db/
+                  target/
+                key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+                restore-keys: ${{ runner.os }}-cargo-
+            - name: 🛠️ Compile the application
+              run: cargo build
+            - name: 🧪 Run multiple samples
+              run: |
+                for sample in ./samples/*.jpg; do
+                  stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
+                  if [[ $stdout =~ ^https:\/\/files.catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
+                    echo "$stdout 🎉 Yes"
+                  else
+                    echo "$stdout 😥 No"
+                    exit 1
+                  echo "✨ All samples were successfully uploaded"
+                  fi
+                done

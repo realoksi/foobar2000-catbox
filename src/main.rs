@@ -7,13 +7,13 @@ use std::{
     process::exit,
 };
 
+use audiotags::{AudioTag, Tag};
 use curl::easy::{Easy2, Form, Handler, List, WriteError};
 use image::codecs::jpeg::JpegEncoder;
 
 struct ResponseBody(Vec<u8>);
 
 impl Handler for ResponseBody {
-    // I stole this. Sorry
     fn write(&mut self, data: &[u8]) -> Result<usize, WriteError> {
         self.0.extend_from_slice(data);
         Ok(data.len())
@@ -22,15 +22,14 @@ impl Handler for ResponseBody {
 
 mod error {
     pub const FILE_NOT_FOUND: i32 = 1;
-    pub const FILE_SYSTEM_READ_ERROR: i32 = 2;
+    // pub const FILE_SYSTEM_READ_ERROR: i32 = 2;
     pub const IMAGE_LOADING_ERROR: i32 = 3;
     pub const IMAGE_ENCODING_ERROR: i32 = 4;
     pub const HTTP_REQUEST_ERROR: i32 = 5;
+    pub const HTTP_RESPONSE_ERROR: i32 = 6;
 }
 
 fn main() {
-    // const THRESHOLD: usize = 2097152; // 2MiB
-
     // Configuration map initialization
 
     let config_path: &Path = &env::current_exe()
@@ -58,7 +57,7 @@ fn main() {
     const DEFAULT_MAX_HEIGHT: u32 = 500;
     const DEFAULT_QUALITY: u8 = 80;
     let default_user_agent: String =
-        "Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0".to_string();
+        "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0".to_string();
     let default_endpoint: String = "https://catbox.moe/user/api.php".to_string();
 
     // Configuration value initialization
@@ -102,10 +101,12 @@ fn main() {
 
     let file_name: &str = file_path.file_name().unwrap().to_str().unwrap();
 
-    let file_buffer: Vec<u8> = std::fs::read(&file_path).unwrap_or_else(|_| {
-        eprintln!("Failed to read from filesystem");
-        exit(error::FILE_SYSTEM_READ_ERROR);
-    });
+    let file_buffer: Vec<u8> = Tag::new()
+        .read_from_path(file_path)
+        .and_then(|file_tag: Box<dyn AudioTag + Send + Sync>| {
+            Ok(file_tag.album_cover().unwrap().data.to_vec())
+        })
+        .unwrap_or_else(|_| std::fs::read(&file_path).unwrap());
 
     let image_buffer: image::DynamicImage =
         image::load_from_memory(&file_buffer).unwrap_or_else(|_| {
@@ -151,7 +152,14 @@ fn main() {
 
     match easy.perform() {
         Ok(_) => {
-            println!("{}", String::from_utf8_lossy(easy.get_ref().0.as_slice()));
+            let response_code: u32 = easy.response_code().unwrap();
+
+            if response_code == 200 || response_code == 304 {
+                println!("{}", String::from_utf8_lossy(easy.get_ref().0.as_slice()));
+            } else {
+                eprintln!("Response error {}", response_code);
+                exit(error::HTTP_RESPONSE_ERROR);
+            }
         }
         Err(e) => {
             eprintln!("{}", e);
