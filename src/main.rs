@@ -14,7 +14,6 @@ use image::codecs::jpeg::JpegEncoder;
 struct ResponseBody(Vec<u8>);
 
 impl Handler for ResponseBody {
-    // I stole this. Sorry
     fn write(&mut self, data: &[u8]) -> Result<usize, WriteError> {
         self.0.extend_from_slice(data);
         Ok(data.len())
@@ -27,11 +26,10 @@ mod error {
     pub const IMAGE_LOADING_ERROR: i32 = 3;
     pub const IMAGE_ENCODING_ERROR: i32 = 4;
     pub const HTTP_REQUEST_ERROR: i32 = 5;
+    pub const HTTP_RESPONSE_ERROR: i32 = 6;
 }
 
 fn main() {
-    // const THRESHOLD: usize = 2097152; // 2MiB
-
     // Configuration map initialization
 
     let config_path: &Path = &env::current_exe()
@@ -154,7 +152,14 @@ fn main() {
 
     match easy.perform() {
         Ok(_) => {
-            println!("{}", String::from_utf8_lossy(easy.get_ref().0.as_slice()));
+            let response_code: u32 = easy.response_code().unwrap();
+
+            if response_code == 200 || response_code == 304 {
+                println!("{}", String::from_utf8_lossy(easy.get_ref().0.as_slice()));
+            } else {
+                eprintln!("Response error {}", response_code);
+                exit(error::HTTP_RESPONSE_ERROR);
+            }
         }
         Err(e) => {
             eprintln!("{}", e);
