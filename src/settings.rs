@@ -24,7 +24,7 @@ pub struct Settings {
     #[serde(default)]
     pub enable_resize: bool,
     #[serde(default)]
-    pub resize_max_resolution: Option<[u16; 2]>,
+    pub resize_max_resolution: [u16; 2],
     #[serde(flatten)]
     pub unexpected: HashMap<String, Value>,
 }
@@ -47,7 +47,7 @@ impl Settings {
             encode_format: EncodeFormat::default(),
             encode_format_quality: 80,
             enable_resize: false,
-            resize_max_resolution: None,
+            resize_max_resolution: [1024, 1024],
             unexpected: HashMap::new(),
         }
     }
