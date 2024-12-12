@@ -1,7 +1,5 @@
 use std::{
-    collections::HashMap,
-    env,
-    fs::File,
+    env, fs,
     io::{self, BufRead, Cursor},
     path::Path,
     process::exit,
@@ -29,57 +27,34 @@ mod error {
     pub const HTTP_RESPONSE_ERROR: i32 = 6;
 }
 
-fn main() {
-    // Configuration map initialization
+mod settings;
+use settings::Settings;
 
-    let config_path: &Path = &env::current_exe()
+fn main() {
+    let settings_path: &Path = &env::current_exe()
         .unwrap()
         .parent()
         .unwrap()
-        .join("config.txt");
-    let mut config: HashMap<String, String> = HashMap::new();
+        .join("settings.yml");
 
-    if let Ok(config_file) = File::open(&config_path) {
-        let config_reader: io::BufReader<File> = io::BufReader::new(config_file);
+    let settings =
+        Settings::from_str(&fs::read_to_string(settings_path).unwrap_or_default()).unwrap();
 
-        for line in config_reader.lines() {
-            if let Ok(line) = line {
-                if let Some((key, value)) = line.split_once("=") {
-                    config.insert(key.trim().to_string(), value.trim().to_string());
-                }
+    if let Err(e) = settings.validate() {
+        match e {
+            settings::Error::EncodeFormatQualityOutOfRange(_) => {
+                eprintln!(
+                "\x1b[38;2;255;18;73mKey value out-of-bounds: encode_format_quality ({})\x1b[0m",
+                settings.encode_format_quality
+            );
+                exit(1);
             }
+            settings::Error::UnexpectedKeys => eprintln!(
+                "\x1b[38;2;255;144;33mUnrecognized keys: {:?} (skipping)\x1b[0m",
+                settings.unexpected.keys()
+            ),
         }
     }
-
-    // Definitions for default values
-
-    const DEFAULT_MAX_WIDTH: u32 = 500;
-    const DEFAULT_MAX_HEIGHT: u32 = 500;
-    const DEFAULT_QUALITY: u8 = 80;
-    let default_user_agent: String =
-        "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0".to_string();
-    let default_endpoint: String = "https://catbox.moe/user/api.php".to_string();
-
-    // Configuration value initialization
-    // When a value isn't available or is invalid, these will always default to their appropriate hardcoded value above.
-
-    let max_width: u32 = config
-        .get("MAX_WIDTH")
-        .unwrap_or(&DEFAULT_MAX_WIDTH.to_string())
-        .parse()
-        .unwrap_or(DEFAULT_MAX_WIDTH);
-    let max_height: u32 = config
-        .get("MAX_HEIGHT")
-        .unwrap_or(&DEFAULT_MAX_HEIGHT.to_string())
-        .parse()
-        .unwrap_or(DEFAULT_MAX_HEIGHT);
-    let quality: u8 = config
-        .get("QUALITY")
-        .unwrap_or(&DEFAULT_QUALITY.to_string())
-        .parse()
-        .unwrap_or(DEFAULT_QUALITY);
-    let user_agent: &String = config.get("USER_AGENT").unwrap_or(&default_user_agent);
-    let endpoint: &String = config.get("ENDPOINT").unwrap_or(&default_endpoint);
 
     // ...
 
@@ -114,6 +89,9 @@ fn main() {
             exit(error::IMAGE_LOADING_ERROR);
         });
 
+    let max_width: u32 = settings.resize_max_resolution.unwrap()[0].into();
+    let max_height: u32 = settings.resize_max_resolution.unwrap()[1].into();
+
     let resize_buffer: image::DynamicImage =
         if image_buffer.width() > max_width || image_buffer.height() > max_height {
             image_buffer.resize(max_width, max_height, image::imageops::FilterType::Nearest)
@@ -123,7 +101,7 @@ fn main() {
 
     let mut cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
 
-    JpegEncoder::new_with_quality(&mut cursor, quality)
+    JpegEncoder::new_with_quality(&mut cursor, settings.encode_format_quality)
         .encode_image(&resize_buffer)
         .unwrap_or_else(|_| {
             eprintln!("Failed to encode image");
@@ -142,11 +120,17 @@ fn main() {
     let mut headers: List = List::new();
     headers.append("Content-Type: multipart/form-data").unwrap();
     headers
-        .append(format!("User-Agent: {}", user_agent).as_str())
+        .append(
+            format!(
+                "User-Agent: {:?}",
+                settings.unexpected.get("user_agent").unwrap()
+            )
+            .as_str(),
+        )
         .unwrap();
 
     let mut easy: Easy2<ResponseBody> = Easy2::new(ResponseBody(Vec::new()));
-    easy.url(endpoint).unwrap();
+    easy.url("https://catbox.moe/user/api.php").unwrap();
     easy.http_headers(headers).unwrap();
     easy.httppost(form).unwrap();
 
