@@ -89,8 +89,8 @@ fn main() {
             exit(error::IMAGE_LOADING_ERROR);
         });
 
-    let max_width: u32 = 1024;
-    let max_height: u32 = 1024;
+    let max_width: u32 = settings.resize_max_resolution[0].into();
+    let max_height: u32 = settings.resize_max_resolution[1].into();
 
     let resize_buffer: image::DynamicImage =
         if image_buffer.width() > max_width || image_buffer.height() > max_height {
@@ -122,8 +122,7 @@ fn main() {
     headers
         .append(
             format!(
-                "User-Agent: {:?}",
-                settings.unexpected.get("user_agent").unwrap()
+                "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
             )
             .as_str(),
         )
