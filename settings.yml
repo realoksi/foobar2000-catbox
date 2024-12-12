@@ -1,0 +1,29 @@
+# settings.yml
+
+# --- LITTERBOX CONSUMER (haha)
+enable_litterbox: true         # Options (boolean): true or false
+
+# LITTERBOX EXPIRE TIME
+litterbox_expire_time: "24h"    # Options (string, case-sensitive): 1h, 12h, 24h, 72h
+
+# --- IMAGE ENCODING
+enable_encode: true             # Options (boolean): true or false
+
+# IMAGE ENCODING FORMAT
+# https://discord.com/developers/docs/reference#image-formatting-image-formats
+encode_format: "JPG"           # Options (string, case-sensitive): JPG, PNG, WEBP, GIF
+
+# IMAGE ENCODING FORMAT QUALITY
+encode_format_quality: 80       # Options (number): from 1 to 100
+
+# --- IMAGE RESIZING
+enable_resize: true             # Options (boolean): true or false
+
+# IMAGE RESIZING MAXIMUM RESOLUTION
+# https://discord.com/developers/docs/rich-presence/overview#adding-custom-art-assets.
+resize_max_resolution:          # Options (number, number): any
+    - 1024                      # Width
+    - 1024                      # Height
+
+# --- MISCELLANEOUS
+user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
