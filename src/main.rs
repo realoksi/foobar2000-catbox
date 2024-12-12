@@ -89,8 +89,8 @@ fn main() {
             exit(error::IMAGE_LOADING_ERROR);
         });
 
-    let max_width: u32 = settings.resize_max_resolution.unwrap()[0].into();
-    let max_height: u32 = settings.resize_max_resolution.unwrap()[1].into();
+    let max_width: u32 = 1024;
+    let max_height: u32 = 1024;
 
     let resize_buffer: image::DynamicImage =
         if image_buffer.width() > max_width || image_buffer.height() > max_height {
