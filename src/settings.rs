@@ -38,6 +38,7 @@ fn default_encode_format_quality() -> u8 {
 }
 
 impl Settings {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             enable_litterbox: true,
