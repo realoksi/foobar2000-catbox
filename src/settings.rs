@@ -69,7 +69,6 @@ impl Settings {
 }
 
 #[derive(EnumString, strum_macros::Display, Deserialize, Debug, PartialEq)]
-#[serde(rename_all = "lowercase")]
 pub enum EncodeFormat {
     #[strum(serialize = "JPEG", serialize = "JPG", ascii_case_insensitive)]
     JPG,
@@ -84,7 +83,6 @@ impl Default for EncodeFormat {
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
-#[serde(rename_all = "lowercase")]
 pub enum ExpireTime {
     #[serde(rename = "1h")]
     ONE,
