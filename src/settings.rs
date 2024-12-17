@@ -1,12 +1,39 @@
-use std::collections::HashMap;
 use serde::Deserialize;
 use serde_yml::Value;
+use std::{collections::HashMap, error, fmt};
 use strum_macros::EnumString;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Error {
-    EncodeFormatQualityOutOfRange(u8),
-    UnexpectedKeys,
+    EncodeFormatQualityError(u8),
+    ResizeMaxResolutionZeroError([u32; 2]),
+    ResizeMaxResolutionPowerError([u32; 2]),
+}
+
+impl error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::EncodeFormatQualityError(t) => {
+                write!(f, "encode_format_quality is out-of-bounds ({})", t)
+            }
+            Error::ResizeMaxResolutionZeroError(t) => {
+                write!(
+                    f,
+                    "resize_max_resolution values must be larger than 0 ({}, {})",
+                    t[0], t[1]
+                )
+            }
+            Error::ResizeMaxResolutionPowerError(t) => {
+                write!(
+                    f,
+                    "both values of resize_max_resolution must be a power-of-two ({}, {})",
+                    t[0], t[1]
+                )
+            }
+        }
+    }
 }
 
 #[derive(Deserialize, Default, Debug, PartialEq)]
@@ -15,7 +42,7 @@ pub struct Settings {
     pub enable_litterbox: bool,
     #[serde(default)]
     pub litterbox_expire_time: ExpireTime,
-    #[serde(default)]
+    #[serde(default = "default_enable_encode")]
     pub enable_encode: bool,
     #[serde(default)]
     pub encode_format: EncodeFormat,
@@ -23,8 +50,10 @@ pub struct Settings {
     pub encode_format_quality: u8,
     #[serde(default)]
     pub enable_resize: bool,
-    #[serde(default)]
-    pub resize_max_resolution: [u16; 2],
+    #[serde(default = "default_resize_max_resolution")]
+    pub resize_max_resolution: [u32; 2],
+    #[serde(default = "default_user_agent")]
+    pub user_agent: String,
     #[serde(flatten)]
     pub unexpected: HashMap<String, Value>,
 }
@@ -33,21 +62,34 @@ fn default_enable_litterbox() -> bool {
     true
 }
 
+fn default_enable_encode() -> bool {
+    false
+}
+
 fn default_encode_format_quality() -> u8 {
     80
+}
+
+fn default_resize_max_resolution() -> [u32; 2] {
+    [1024, 1024]
+}
+
+fn default_user_agent() -> String {
+    "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0".into()
 }
 
 impl Settings {
     #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
-            enable_litterbox: true,
+            enable_litterbox: default_enable_litterbox(),
             litterbox_expire_time: ExpireTime::default(),
-            enable_encode: false,
+            enable_encode: default_enable_encode(),
             encode_format: EncodeFormat::default(),
-            encode_format_quality: 80,
+            encode_format_quality: default_encode_format_quality(),
             enable_resize: false,
-            resize_max_resolution: [1024, 1024],
+            resize_max_resolution: default_resize_max_resolution(),
+            user_agent: default_user_agent(),
             unexpected: HashMap::new(),
         }
     }
@@ -58,11 +100,21 @@ impl Settings {
 
     pub fn validate(&self) -> Result<(), Error> {
         if self.encode_format_quality > 100 || self.encode_format_quality < 1 {
-            return Err(Error::EncodeFormatQualityOutOfRange(self.encode_format_quality));
+            return Err(Error::EncodeFormatQualityError(self.encode_format_quality));
         }
 
-        if !self.unexpected.is_empty() {
-            return Err(Error::UnexpectedKeys);
+        if !(self.resize_max_resolution[0] > 0) || !(self.resize_max_resolution[1] > 0) {
+            return Err(Error::ResizeMaxResolutionZeroError(
+                self.resize_max_resolution,
+            ));
+        }
+
+        if !self.resize_max_resolution[0].is_power_of_two()
+            || !self.resize_max_resolution[1].is_power_of_two()
+        {
+            return Err(Error::ResizeMaxResolutionPowerError(
+                self.resize_max_resolution,
+            ));
         }
 
         Ok(())
@@ -75,6 +127,8 @@ pub enum EncodeFormat {
     JPG,
     #[strum(serialize = "PNG", ascii_case_insensitive)]
     PNG,
+    #[strum(serialize = "WEBP", ascii_case_insensitive)]
+    WEBP,
 }
 
 impl Default for EncodeFormat {
@@ -83,15 +137,19 @@ impl Default for EncodeFormat {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(EnumString, strum_macros::Display, Deserialize, Debug, PartialEq)]
 pub enum ExpireTime {
     #[serde(rename = "1h")]
+    #[strum(serialize = "1h", ascii_case_insensitive)]
     ONE,
     #[serde(rename = "12h")]
+    #[strum(serialize = "12h", ascii_case_insensitive)]
     TWELVE,
     #[serde(rename = "24h")]
+    #[strum(serialize = "24h", ascii_case_insensitive)]
     TWENTYFOUR,
     #[serde(rename = "72h")]
+    #[strum(serialize = "72h", ascii_case_insensitive)]
     SEVENTYTWO,
 }
 
@@ -134,19 +192,14 @@ mod tests {
         "#;
 
         let settings = Settings::from_str(&err_case1).unwrap();
-        assert_eq!(
-            settings.validate(),
-            Err(Error::EncodeFormatQualityOutOfRange(110))
-        );
+
+        assert!(settings.validate().is_err());
 
         let err_case2 = r#"
         encode_format_quality: 0
         "#;
 
         let settings = Settings::from_str(&err_case2).unwrap();
-        assert_eq!(
-            settings.validate(),
-            Err(Error::EncodeFormatQualityOutOfRange(0))
-        );
+        assert!(settings.validate().is_err());
     }
 }
