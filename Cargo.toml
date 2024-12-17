@@ -30,6 +30,3 @@ version = "0.25.5"
 
 [dependencies.audiotags]
 version = "0.5.0"
-
-[dependencies.zune-jpeg]
-version="0.4.13"
