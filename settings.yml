@@ -1,17 +1,17 @@
 # settings.yml
 
 # --- LITTERBOX CONSUMER (haha)
-enable_litterbox: true         # Options (boolean): true or false
+enable_litterbox: true          # Options (boolean): true or false
 
 # LITTERBOX EXPIRE TIME
 litterbox_expire_time: "24h"    # Options (string, case-sensitive): 1h, 12h, 24h, 72h
 
 # --- IMAGE ENCODING
-enable_encode: true             # Options (boolean): true or false
+enable_encode: false            # Options (boolean): true or false
 
 # IMAGE ENCODING FORMAT
 # https://discord.com/developers/docs/reference#image-formatting-image-formats
-encode_format: "JPG"           # Options (string, case-sensitive): JPG, PNG, WEBP, GIF
+encode_format: "JPG"            # Options (string, case-sensitive): JPG, PNG, WEBP, GIF
 
 # IMAGE ENCODING FORMAT QUALITY
 encode_format_quality: 80       # Options (number): from 1 to 100
