@@ -5,30 +5,12 @@ use std::{
     process::exit,
 };
 
-use audiotags::{AudioTag, Tag};
-use curl::easy::{Easy2, Form, Handler, List, WriteError};
-use image::codecs::jpeg::JpegEncoder;
+use consumer::{Catbox, Consumer, Litterbox};
+use image::codecs::{jpeg::JpegEncoder, png::PngEncoder, webp::WebPEncoder};
+use settings::{EncodeFormat, Error, Settings};
 
-struct ResponseBody(Vec<u8>);
-
-impl Handler for ResponseBody {
-    fn write(&mut self, data: &[u8]) -> Result<usize, WriteError> {
-        self.0.extend_from_slice(data);
-        Ok(data.len())
-    }
-}
-
-mod error {
-    pub const FILE_NOT_FOUND: i32 = 1;
-    // pub const FILE_SYSTEM_READ_ERROR: i32 = 2;
-    pub const IMAGE_LOADING_ERROR: i32 = 3;
-    pub const IMAGE_ENCODING_ERROR: i32 = 4;
-    pub const HTTP_REQUEST_ERROR: i32 = 5;
-    pub const HTTP_RESPONSE_ERROR: i32 = 6;
-}
-
+mod consumer;
 mod settings;
-use settings::Settings;
 
 fn main() {
     let settings_path: &Path = &env::current_exe()
@@ -37,26 +19,25 @@ fn main() {
         .unwrap()
         .join("settings.yml");
 
-    let settings =
-        Settings::from_str(&fs::read_to_string(settings_path).unwrap_or_default()).unwrap();
+    let settings = Settings::from_str(&fs::read_to_string(settings_path).unwrap_or_default())
+        .unwrap_or(Settings::new());
 
     if let Err(e) = settings.validate() {
         match e {
-            settings::Error::EncodeFormatQualityOutOfRange(_) => {
-                eprintln!(
-                "\x1b[38;2;255;18;73mKey value out-of-bounds: encode_format_quality ({})\x1b[0m",
-                settings.encode_format_quality
-            );
+            Error::EncodeFormatQualityError(_) => {
+                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
                 exit(1);
             }
-            settings::Error::UnexpectedKeys => eprintln!(
-                "\x1b[38;2;255;144;33mUnrecognized keys: {:?} (skipping)\x1b[0m",
-                settings.unexpected.keys()
-            ),
+            Error::ResizeMaxResolutionZeroError(_) => {
+                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
+                exit(2);
+            }
+            Error::ResizeMaxResolutionPowerError(_) => {
+                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
+                exit(3);
+            }
         }
     }
-
-    // ...
 
     let input: String = io::stdin()
         .lock()
@@ -71,82 +52,65 @@ fn main() {
 
     if !file_path.exists() {
         eprintln!("{:?} doesn't exist.", file_path.as_os_str());
-        exit(error::FILE_NOT_FOUND);
+        exit(4);
     }
 
-    let file_name: &str = file_path.file_name().unwrap().to_str().unwrap();
+    let file_buffer: Vec<u8> = std::fs::read(&file_path).unwrap();
 
-    let file_buffer: Vec<u8> = Tag::new()
-        .read_from_path(file_path)
-        .and_then(|file_tag: Box<dyn AudioTag + Send + Sync>| {
-            Ok(file_tag.album_cover().unwrap().data.to_vec())
-        })
-        .unwrap_or_else(|_| std::fs::read(&file_path).unwrap());
+    let image_buffer = image::load_from_memory(&file_buffer).unwrap_or_else(|_| {
+        eprintln!("Failed to load image from memory");
+        exit(5);
+    });
 
-    let image_buffer: image::DynamicImage =
-        image::load_from_memory(&file_buffer).unwrap_or_else(|_| {
-            eprintln!("Failed to load image from memory");
-            exit(error::IMAGE_LOADING_ERROR);
-        });
+    let max_width = settings.resize_max_resolution[0];
+    let max_height = settings.resize_max_resolution[1];
 
-    let max_width: u32 = settings.resize_max_resolution[0].into();
-    let max_height: u32 = settings.resize_max_resolution[1].into();
+    let next_buffer = if settings.enable_resize
+        && (image_buffer.width() > max_width || image_buffer.height() > max_height)
+    {
+        image_buffer.resize(max_width, max_height, image::imageops::FilterType::Nearest)
+    } else {
+        image_buffer
+    };
 
-    let resize_buffer: image::DynamicImage =
-        if image_buffer.width() > max_width || image_buffer.height() > max_height {
-            image_buffer.resize(max_width, max_height, image::imageops::FilterType::Nearest)
-        } else {
-            image_buffer
-        };
+    let mut cursor = Cursor::new(Vec::<u8>::new());
 
-    let mut cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
+    if settings.enable_encode {
+        match settings.encode_format {
+            EncodeFormat::JPG => next_buffer
+                .write_with_encoder(JpegEncoder::new_with_quality(
+                    &mut cursor,
+                    settings.encode_format_quality,
+                ))
+                .unwrap(),
+            EncodeFormat::PNG => next_buffer
+                .write_with_encoder(PngEncoder::new(&mut cursor))
+                .unwrap(),
+            EncodeFormat::WEBP => next_buffer
+                .write_with_encoder(WebPEncoder::new_lossless(&mut cursor))
+                .unwrap(),
+        }
+    } else {
+        next_buffer
+            .write_to(&mut cursor, image::guess_format(&file_buffer).unwrap())
+            .unwrap();
+    }
 
-    JpegEncoder::new_with_quality(&mut cursor, settings.encode_format_quality)
-        .encode_image(&resize_buffer)
-        .unwrap_or_else(|_| {
-            eprintln!("Failed to encode image");
-            exit(error::IMAGE_ENCODING_ERROR);
-        });
+    let consumer: Box<dyn Consumer> = match settings.enable_litterbox {
+        true => Box::new(Litterbox::new(
+            settings.litterbox_expire_time.to_string(),
+            Some(settings.user_agent),
+        )),
+        false => Box::new(Catbox::new(Some(settings.user_agent))),
+    };
 
-    let mut form: Form = Form::new();
-    form.part("reqtype").contents(b"fileupload").add().unwrap();
-    form.part("userhash").contents(b"").add().unwrap();
-    form.part("fileToUpload")
-        .content_type("image/jpeg")
-        .buffer(&file_name, cursor.into_inner())
-        .add()
-        .unwrap();
-
-    let mut headers: List = List::new();
-    headers.append("Content-Type: multipart/form-data").unwrap();
-    headers
-        .append(
-            format!(
-                "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
-            )
-            .as_str(),
-        )
-        .unwrap();
-
-    let mut easy: Easy2<ResponseBody> = Easy2::new(ResponseBody(Vec::new()));
-    easy.url("https://catbox.moe/user/api.php").unwrap();
-    easy.http_headers(headers).unwrap();
-    easy.httppost(form).unwrap();
-
-    match easy.perform() {
-        Ok(_) => {
-            let response_code: u32 = easy.response_code().unwrap();
-
-            if response_code == 200 || response_code == 304 {
-                println!("{}", String::from_utf8_lossy(easy.get_ref().0.as_slice()));
-            } else {
-                eprintln!("Response error {}", response_code);
-                exit(error::HTTP_RESPONSE_ERROR);
-            }
+    match consumer.upload_image(cursor.into_inner()) {
+        Ok(response) => {
+            println!("{}", response);
         }
         Err(e) => {
             eprintln!("{}", e);
-            exit(error::HTTP_REQUEST_ERROR);
+            exit(6)
         }
-    }
+    };
 }
