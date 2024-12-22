@@ -14,9 +14,10 @@ jobs:
             - name: Run kcov on test binary
               uses: sudo-bot/action-kcov@latest
               with:
-                cli-args: "--dump-summary --include-pattern=$(pwd)/src --exclude-pattern=$(pwd)/tests,target coverage/ target/debug/deps/foobar2000_catbox-ec9dafca3ef6c40e"
+                cli-args: "--dump-summary --include-pattern=./src --exclude-pattern=./tests,target ./coverage/ ./target/debug/deps/foobar2000_catbox-*"
             - name: Upload coverage report
               uses: codecov/codecov-action@v5
               with:
                 token: ${{ secrets.CODECOV_TOKEN }}
-                directory: coverage/
+                directory: ./coverage/
+                fail_ci_if_error: true
