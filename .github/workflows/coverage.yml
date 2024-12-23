@@ -16,7 +16,7 @@ jobs:
             - name: Install grcov
               run: |
                 rustup component add llvm-tools-preview
-                apt-get install lcov grcov
+                sudo apt-get install lcov grcov
             - name: Compile
               env:
                 CARGO_INCREMENTAL: 0
