@@ -204,7 +204,7 @@ mod tests {
     }
 
     #[test]
-    fn test_resize_max_resolution(){
+    fn test_resize_max_resolution() {
         let ok_case1 = r#"
         resize_max_resolution:
             - 512
@@ -247,11 +247,39 @@ mod tests {
         let err_case4 = r#"
         resize_max_resolution:
             - 513
-            - 513
+            - 512
         "#;
 
         let settings = Settings::from_str(&err_case4).unwrap();
 
         assert!(settings.validate().is_err());
+
+        let err_case5 = r#"
+        resize_max_resolution:
+            - 512
+            - 513
+        "#;
+
+        let settings = Settings::from_str(&err_case5).unwrap();
+
+        assert!(settings.validate().is_err());
+    }
+
+    #[test]
+    fn test_error_displays() {
+        assert_eq!(
+            Error::EncodeFormatQualityError(255).to_string(),
+            "encode_format_quality is out-of-bounds (255)"
+        );
+
+        assert_eq!(
+            Error::ResizeMaxResolutionZeroError([0, 0]).to_string(),
+            "resize_max_resolution values must be larger than 0 (0, 0)"
+        );
+
+        assert_eq!(
+            Error::ResizeMaxResolutionPowerError([3, 5]).to_string(),
+            "both values of resize_max_resolution must be a power-of-two (3, 5)"
+        );
     }
 }
