@@ -18,19 +18,10 @@ jobs:
                 rustup component add llvm-tools-preview
                 sudo apt-get install lcov grcov
             - name: Compile
-              env:
-                CARGO_INCREMENTAL: 0
-                RUSTFLAGS: "-Cinstrument-coverage"
-                LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
-              run: cargo test --no-run
+              run: CARGO_INCREMENTAL=0 RUSTFLAGS='-Cinstrument-coverage' LLVM_PROFILE_FILE='cargo-test-%p-%m.profraw' cargo test
             - name: Coverage report
               run: |
-                grcov . --binary-path ./target/debug/ \
-                        -s . \
-                        -t lcov \
-                        --branch \
-                        --ignore-not-existing \
-                        -o lcov.info
+                grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
             - name: Upload coverage report
               uses: codecov/codecov-action@v5
               with:
