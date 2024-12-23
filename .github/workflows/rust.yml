@@ -25,7 +25,18 @@ jobs:
                 key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                 restore-keys: ${{ runner.os }}-cargo-
             - name: 🛠️ Compile the application
-              run: cargo build
+              run: |
+                cargo build &&
+                CARGO_INCREMENTAL=0 RUSTFLAGS='-Cinstrument-coverage' LLVM_PROFILE_FILE='cargo-test-%p-%m.profraw' cargo build --tests
+            - name: 🗞️ Generate coverage report
+              run: |
+                grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
+            - name: 🔗 Upload report to codecov
+              uses: codecov/codecov-action@v5
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                fail_ci_if_error: true
+                files: lcov.info
             - name: 🧪 Run multiple samples
               run: |
                 for sample in ./samples/*.jpg; do
