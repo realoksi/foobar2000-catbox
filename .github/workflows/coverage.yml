@@ -1,10 +1,5 @@
 name: Coverage
 
-permissions:
-  contents: read
-
-sudo: required
-
 on:
     push:
         branches: ["development"]
@@ -16,10 +11,8 @@ jobs:
             - uses: actions/checkout@v4
             - name: Compile
               run: cargo test --no-run
-            - name: Run kcov on test binary
-              uses: sudo-bot/action-kcov@latest
-              with:
-                cli-args: "--dump-summary --include-pattern=./src --exclude-pattern=./tests,target ./coverage/ ./target/debug/deps/foobar2000_catbox-*"
+            - name: rust-grcov
+              uses: actions-rs/grcov@v0.1
             - name: Upload coverage report
               uses: codecov/codecov-action@v5
               with:
