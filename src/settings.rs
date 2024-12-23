@@ -163,6 +163,27 @@ impl Default for ExpireTime {
 mod tests {
     use super::*;
 
+    use std::str::FromStr;
+
+    #[test]
+    fn test_encode_format() {
+        assert_eq!(EncodeFormat::from_str("jPg"), Ok(EncodeFormat::JPG));
+        assert_eq!(EncodeFormat::from_str("jpg").unwrap(), EncodeFormat::JPG);
+        assert_eq!(EncodeFormat::from_str("jPEG").unwrap(), EncodeFormat::JPG);
+        assert_eq!(EncodeFormat::from_str("Png").unwrap(), EncodeFormat::PNG);
+        assert_eq!(EncodeFormat::from_str("WebP").unwrap(), EncodeFormat::WEBP);
+        assert!(EncodeFormat::from_str("bad").is_err());
+
+        assert_eq!(EncodeFormat::JPG.to_string(), "JPEG");
+        assert_eq!(EncodeFormat::PNG.to_string(), "PNG");
+        assert_eq!(EncodeFormat::WEBP.to_string(), "WEBP");
+
+        assert_eq!(format!("{:?}", EncodeFormat::JPG), "JPG");
+
+        assert_eq!(EncodeFormat::JPG, EncodeFormat::JPG);
+        assert_ne!(EncodeFormat::JPG, EncodeFormat::PNG);
+    }
+
     #[test]
     fn test_from_str() {
         let ok_case1 = r#"
