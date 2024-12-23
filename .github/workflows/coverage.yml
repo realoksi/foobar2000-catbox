@@ -9,13 +9,31 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                toolchain: stable
+            - name: Install grcov
+              run: |
+                rustup component add llvm-tools-preview
+                apt-get install lcov grcov
             - name: Compile
+              env:
+                CARGO_INCREMENTAL: 0
+                RUSTFLAGS: "-Cinstrument-coverage"
+                LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
               run: cargo test --no-run
-            - name: rust-grcov
-              uses: actions-rs/grcov@v0.1
+            - name: Coverage report
+              run: |
+                grcov . --binary-path ./target/debug/ \
+                        -s . \
+                        -t lcov \
+                        --branch \
+                        --ignore-not-existing \
+                        -o lcov.info
             - name: Upload coverage report
               uses: codecov/codecov-action@v5
               with:
                 token: ${{ secrets.CODECOV_TOKEN }}
-                directory: ./coverage/
                 fail_ci_if_error: true
+                files: lcov.info
