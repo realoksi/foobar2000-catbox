@@ -24,6 +24,10 @@ jobs:
                   target/
                 key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                 restore-keys: ${{ runner.os }}-cargo-
+            - name: 🚀 Setup grcov and llvm-tools
+              run: |
+                rustup component add llvm-tools-preview
+                sudo apt-get install lcov grcov
             - name: 🛠️ Compile the application
               run: |
                 cargo build &&
