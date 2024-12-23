@@ -202,4 +202,56 @@ mod tests {
         let settings = Settings::from_str(&err_case2).unwrap();
         assert!(settings.validate().is_err());
     }
+
+    #[test]
+    fn test_resize_max_resolution(){
+        let ok_case1 = r#"
+        resize_max_resolution:
+            - 512
+            - 512
+        "#;
+
+        let settings = Settings::from_str(&ok_case1).unwrap();
+        assert_eq!(settings.resize_max_resolution, [512, 512]);
+
+        let err_case1 = r#"
+        resize_max_resolution:
+            - 0
+            - 1024
+        "#;
+
+        let settings = Settings::from_str(&err_case1).unwrap();
+
+        assert!(settings.validate().is_err());
+
+        let err_case2 = r#"
+        resize_max_resolution:
+            - 1024
+            - 0
+        "#;
+
+        let settings = Settings::from_str(&err_case2).unwrap();
+
+        assert!(settings.validate().is_err());
+
+        let err_case3 = r#"
+        resize_max_resolution:
+            - 0
+            - 0
+        "#;
+
+        let settings = Settings::from_str(&err_case3).unwrap();
+
+        assert!(settings.validate().is_err());
+
+        let err_case4 = r#"
+        resize_max_resolution:
+            - 513
+            - 513
+        "#;
+
+        let settings = Settings::from_str(&err_case4).unwrap();
+
+        assert!(settings.validate().is_err());
+    }
 }
