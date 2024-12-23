@@ -1,5 +1,5 @@
 target/
-cargo-test-*.profraw
+*.profraw
 
 # Visual Studio Code
 .vscode/
