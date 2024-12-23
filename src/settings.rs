@@ -179,6 +179,26 @@ mod tests {
     }
 
     #[test]
+    fn test_validation(){
+        let ok_case1 = r#"
+        enable_litterbox: true
+        litterbox_expire_time: "24h"
+        enable_encode: false
+        encode_format: "JPG"
+        encode_format_quality: 80
+        enable_resize: true
+        resize_max_resolution:
+            - 1024
+            - 1024
+        user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
+        "#;
+
+        let settings = Settings::from_str(&ok_case1).unwrap();
+
+        assert!(settings.validate().is_ok());
+    }
+
+    #[test]
     fn test_encode_format_quality_validation() {
         let ok_case1 = r#"
         encode_format_quality: 100
