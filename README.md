@@ -52,6 +52,8 @@ mv foobar2000-catbox.exe C:\
 > [!NOTE]
 > Although the previous command moves it to the root of the C drive, you can put it anywhere as long as the path specified later in foobar2000 is accurate
 
+- Open foobar2000
+
 - Open the `Preferences` menu from the `File` dropdown in the toolbar
 
 > [!TIP]
