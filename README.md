@@ -3,6 +3,7 @@
 
 ![Workflow](https://github.com/realoksi/foobar2000-catbox/actions/workflows/rust.yml/badge.svg)
 ![Rust](https://img.shields.io/badge/Rust-%23000000.svg?e&logo=rust&logoColor=white)
+[![codecov](https://codecov.io/gh/realoksi/foobar2000-catbox/graph/badge.svg?token=O2ENML3DAY)](https://codecov.io/gh/realoksi/foobar2000-catbox)
 
 ## About
 
