@@ -6,6 +6,9 @@ on:
 
 env:
     CARGO_TERM_COLOR: always
+    CARGO_INCREMENTAL: 0
+    RUSTFLAGS: -Cinstrument-coverage
+    LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
 
 jobs:
     build:
@@ -30,8 +33,8 @@ jobs:
                 sudo apt-get install lcov grcov
             - name: 🛠️ Compile the application
               run: |
-                cargo build &&
-                CARGO_INCREMENTAL=0 RUSTFLAGS='-Cinstrument-coverage' LLVM_PROFILE_FILE='cargo-test-%p-%m.profraw' cargo build --tests
+                cargo build && \
+                cargo build --tests
             - name: 🗞️ Generate coverage report
               run: |
                 grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
