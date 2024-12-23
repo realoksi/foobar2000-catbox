@@ -6,6 +6,9 @@ on:
 
 env:
     CARGO_TERM_COLOR: always
+    CARGO_INCREMENTAL: 0
+    RUSTFLAGS: -Cinstrument-coverage
+    LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
 
 jobs:
     build:
@@ -13,24 +16,30 @@ jobs:
         steps:
             - name: 📋 Checkout from repository
               uses: actions/checkout@v4
-            - name: 🗄️ Cargo cache
-              uses: actions/cache@v3
-              with:
-                path: |
-                  ~/.cargo/bin/
-                  ~/.cargo/registry/index/
-                  ~/.cargo/registry/cache/
-                  ~/.cargo/git/db/
-                  target/
-                key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-                restore-keys: ${{ runner.os }}-cargo-
+            - name: 🚀 Setup Rust, grcov, and llvm-tools
+              run: |
+                rustup toolchain install stable --profile minimal
+                rustup component add llvm-tools-preview
+                sudo apt-get install -y lcov grcov
+            - name: 🗄️ Caching Rust dependencies
+              uses: Swatinem/rust-cache@v2
             - name: 🛠️ Compile the application
-              run: cargo build
+              run: |
+                cargo build
+                cargo test --no-fail-fast -- --nocapture
+            - name: 🗞️ Generate coverage report
+              run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
+            - name: 🔗 Upload report to codecov
+              uses: codecov/codecov-action@v5
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                fail_ci_if_error: true
+                files: lcov.info
             - name: 🧪 Run multiple samples
               run: |
                 for sample in ./samples/*.jpg; do
                   stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
-                  if [[ $stdout =~ ^https:\/\/files.catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
+                  if [[ $stdout =~ ^https:\/\/(files|litter).catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
                     echo "$stdout 🎉 Yes"
                   else
                     echo "$stdout 😥 No"
