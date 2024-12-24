@@ -8,6 +8,9 @@ strip = true
 lto = true
 codegen-units = 1
 
+[dependencies]
+base64 = "0.22.1"
+
 [dependencies.serde]
 version = "1.0.216"
 features = ["derive"]
