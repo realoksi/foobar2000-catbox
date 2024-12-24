@@ -134,19 +134,19 @@ mod tests {
 
     #[test]
     fn test_perform() {
+        let user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0".to_string();
+
         assert!(perform(
             "https://example.com/".into(),
             Form::new(),
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
-                .into(),
+            user_agent.clone(),
         )
         .is_ok());
 
         assert!(perform(
             "http://localhost/".into(),
             Form::new(),
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
-                .into(),
+            user_agent.clone(),
         )
         .is_err());
     }
