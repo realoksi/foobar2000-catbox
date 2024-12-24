@@ -113,3 +113,41 @@ impl Consumer for Litterbox {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::settings::ExpireTime;
+
+    use super::*;
+    use base64::prelude::*;
+
+    #[test]
+    fn test_consumers() {
+        let sample_image = BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec();
+
+        assert!(Catbox::new(None).upload_image(sample_image.clone()).is_ok());
+
+        assert!(Litterbox::new(ExpireTime::default().to_string(), None)
+            .upload_image(sample_image.clone())
+            .is_ok());
+    }
+
+    #[test]
+    fn test_perform() {
+        let user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0".to_string();
+
+        assert!(perform(
+            "https://example.com/".into(),
+            Form::new(),
+            user_agent.clone(),
+        )
+        .is_ok());
+
+        assert!(perform(
+            "http://localhost/".into(),
+            Form::new(),
+            user_agent.clone(),
+        )
+        .is_err());
+    }
+}
