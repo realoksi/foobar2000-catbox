@@ -6,13 +6,14 @@ edition = "2021"
 [profile.release]
 strip = true
 lto = true
-codegen-units = 1
+codegen-units = 16
 
 [dependencies]
 base64 = "0.22.1"
 
 [dependencies.serde]
 version = "1.0.216"
+default-features = false
 features = ["derive"]
 
 [dependencies.serde_yml]
@@ -20,6 +21,7 @@ version = "0.0.12"
 
 [dependencies.strum]
 version = "0.26.3"
+default-features = false
 features = ["strum_macros"]
 
 [dependencies.strum_macros]
@@ -30,3 +32,5 @@ version = "0.4.47"
 
 [dependencies.image]
 version = "0.25.5"
+default-features = false
+features = ["png", "jpeg", "webp"]
