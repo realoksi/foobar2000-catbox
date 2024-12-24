@@ -113,3 +113,25 @@ impl Consumer for Litterbox {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_perform() {
+        assert!(perform(
+            "https://example.com/".into(),
+            Form::new(),
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
+                .into(),
+        ).is_ok());
+
+        assert!(perform(
+            "http://localhost/".into(),
+            Form::new(),
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
+                .into(),
+        ).is_err());
+    }
+}
