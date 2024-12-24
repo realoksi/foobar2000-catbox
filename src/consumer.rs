@@ -116,7 +116,23 @@ impl Consumer for Litterbox {
 
 #[cfg(test)]
 mod tests {
+    use crate::settings::ExpireTime;
+
     use super::*;
+    use base64::prelude::*;
+
+    #[test]
+    fn test_consumers() {
+        let catbox_consumer = Catbox::new(None);
+
+        // The Base64 below is a bare PNG.
+        assert!(catbox_consumer.upload_image(BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec()).is_ok());
+
+        let litterbox_consumer = Litterbox::new(ExpireTime::default().to_string(), None);
+
+        assert!(litterbox_consumer.upload_image(BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec()).is_ok());
+
+    }
 
     #[test]
     fn test_perform() {
@@ -125,13 +141,15 @@ mod tests {
             Form::new(),
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
                 .into(),
-        ).is_ok());
+        )
+        .is_ok());
 
         assert!(perform(
             "http://localhost/".into(),
             Form::new(),
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
                 .into(),
-        ).is_err());
+        )
+        .is_err());
     }
 }
