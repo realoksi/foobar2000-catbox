@@ -123,15 +123,13 @@ mod tests {
 
     #[test]
     fn test_consumers() {
-        let catbox_consumer = Catbox::new(None);
+        let sample_image = BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec();
 
-        // The Base64 below is a bare PNG.
-        assert!(catbox_consumer.upload_image(BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec()).is_ok());
+        assert!(Catbox::new(None).upload_image(sample_image.clone()).is_ok());
 
-        let litterbox_consumer = Litterbox::new(ExpireTime::default().to_string(), None);
-
-        assert!(litterbox_consumer.upload_image(BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec()).is_ok());
-
+        assert!(Litterbox::new(ExpireTime::default().to_string(), None)
+            .upload_image(sample_image.clone())
+            .is_ok());
     }
 
     #[test]
