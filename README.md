@@ -92,7 +92,7 @@ You can get started by copying the full sample `settings.yml` included in this r
 
 ## Troubleshooting
 
-TODO
+...
 
 ## Diagram
 
@@ -114,7 +114,6 @@ A[Load and validate settings]
 ## Notes
 
 - Litterbox is enabled by default to help reduce the potential impact on Catbox's services.
--
 
 ## TODO
 
@@ -122,7 +121,9 @@ A[Load and validate settings]
 - [ ] Also use environment variables as configuration options
 - [x] Write a mermaid chart outlining the process flow
 - [x] Create basic compiling, installation, and usage instructions
-- [ ] More comprehensive testing
+- [x] More comprehensive testing
 - [ ] Github actions for version releases
-- [ ] Reduce release version file size and compile time
+- [x] Reduce release version file size and compile time
 - [ ] Write a troubleshooting section
+- [ ] Aggressive encoding/downscaling to reach specific file size
+- [ ] Automatic encoding from non-supported format to supported format (supported by Discord)
