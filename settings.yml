@@ -1,29 +1,41 @@
 # settings.yml
 
-# --- LITTERBOX CONSUMER (haha)
-enable_litterbox: true          # Options (boolean): true or false
+# --- LITTERBOX
+# A temporary storage service hosted by Catbox. While it offers no direct benefits
+# to *you*, it also presents no apparent drawbacks. See about their privacy policy
+# here: https://catbox.moe/legal.php
+enable_litterbox: true       # Options (boolean): true or false
 
 # LITTERBOX EXPIRE TIME
-litterbox_expire_time: "24h"    # Options (string, case-sensitive): 1h, 12h, 24h, 72h
+# After how many hours the file will be removed from their system.
+litterbox_expire_time: "24h" # Options (string, case-sensitive): "1h", "12h", "24h", "72h"
 
 # --- IMAGE ENCODING
-enable_encode: false            # Options (boolean): true or false
+# Enables re-encoding of album art, offerring further quality and file size
+# balancing options.
+enable_encode: false         # Options (boolean): true or false
 
 # IMAGE ENCODING FORMAT
-# https://discord.com/developers/docs/reference#image-formatting-image-formats
-encode_format: "JPG"            # Options (string, case-sensitive): JPG, PNG, WEBP
+# Specifies the output format to encode the album art in.
+encode_format: "JPG"         # Options (string, case-sensitive): "JPG", "PNG", "WEBP"
 
 # IMAGE ENCODING FORMAT QUALITY
-encode_format_quality: 80       # Options (number): from 1 to 100
+# Defines the level of quality to use on the encoded image. Note that this is
+# currently only applicable when using the JPG format!
+encode_format_quality: 80    # Options (number): from 1 (lower quality, smaller and faster) to 100 (higher quality, larger and slower)
 
 # --- IMAGE RESIZING
-enable_resize: true             # Options (boolean): true or false
+# When enabled, album art exceeding the defined resize_max_resolution values on any
+# side will be scaled down to fit within these specified limits while preserving the
+# original aspect ratio.
+enable_resize: true          # Options (boolean): true or false
 
 # IMAGE RESIZING MAXIMUM RESOLUTION
-# https://discord.com/developers/docs/rich-presence/overview#adding-custom-art-assets.
-resize_max_resolution:          # Options (number, number): any
-    - 1024                      # Width
-    - 1024                      # Height
+# Sets the desired width and height to scale images to. You must use power-of-two
+# values (e.g., 2^n = 512, 1024, etc.).
+resize_max_resolution:       # Options (sequence): width and height
+    - 1024                   # Width (number)
+    - 1024                   # Height (number)
 
 # --- MISCELLANEOUS
 user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
