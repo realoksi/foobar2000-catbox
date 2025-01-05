@@ -1,10 +1,9 @@
 # settings.yml
 
 # --- LITTERBOX
-# A temporary storage service hosted by Catbox. While it offers no direct benefits
-# to *you*, it also presents no apparent drawbacks. See about their privacy policy
-# here: https://catbox.moe/legal.php
-enable_litterbox: true       # Options (boolean): true or false
+# Use this with caution. After the set expiration time has passed, the saved link will break,
+# and foo_discord_rich will be none the wiser.
+enable_litterbox: false       # Options (boolean): true or false
 
 # LITTERBOX EXPIRE TIME
 # After how many hours the file will be removed from their system.
