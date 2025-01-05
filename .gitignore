@@ -1,5 +1,6 @@
 target/
 *.profraw
+*.info
 
 # Visual Studio Code
 .vscode/
