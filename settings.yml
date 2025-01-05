@@ -1,7 +1,8 @@
 # settings.yml
 
 # --- LITTERBOX
-# ...
+# Use this with caution. After the set expiration time has passed, the saved link will break,
+# and foo_discord_rich will be none the wiser.
 enable_litterbox: false       # Options (boolean): true or false
 
 # LITTERBOX EXPIRE TIME
