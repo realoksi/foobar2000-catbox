@@ -1,6 +1,6 @@
 [package]
 name = "foobar2000-catbox"
-version = "1.0.7"
+version = "1.0.8"
 edition = "2021"
 
 [profile.release]
@@ -8,8 +8,8 @@ strip = true
 lto = true
 codegen-units = 16
 
-[dependencies]
-base64 = "0.22.1"
+[dependencies.base64]
+version = "0.22.1"
 
 [dependencies.serde]
 version = "1.0.217"
