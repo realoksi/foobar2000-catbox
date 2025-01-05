@@ -59,7 +59,7 @@ pub struct Settings {
 }
 
 fn default_enable_litterbox() -> bool {
-    true
+    false
 }
 
 fn default_enable_encode() -> bool {

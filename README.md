@@ -8,7 +8,7 @@
 
 ## About
 
-This is a helper application that uploads images to Catbox/Litterbox, and is meant to be invoked by the [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) plugin.
+This is a helper application that uploads images to Catbox, and is meant to be invoked by the [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) plugin.
 
 ## Compiling
 
@@ -81,7 +81,6 @@ As with the previous version of this uploader, you can fine-tune its behavior fu
 
 |Feature|Description|
 |-|-|
-|Litterbox| You can now specify whether or not to use Litterbox - a service under Catbox that only temporarily stores uploaded files. You can also specify the expiration time from a set of predefined values (1, 12, 24, or 72 hours). After this time, your uploaded cover art will be removed from their database.|
 |Encoding format and quality|Adjust encoding format and quality to get your desired speed/image fidelity. Currently, you can upload cover art as a JPG, PNG, or WEBP - as these are the formats supported by Discord. You may only currently control the quality level of JPGs.|
 |Downscaling|Automatically downscale images that exceed a specified threshold.|
 
@@ -106,14 +105,14 @@ A[Load and validate settings]
 -->C[Load image into memory]
 -->D[Should resize image?]
 -->E[Should encode image?]
--->F[Use Catbox or Litterbox]
+-->F[Use Catbox consumer]
 -->G[Upload image]
 -->H[Output response to stdout]
 ```
 
 ## Notes
 
-- Litterbox is enabled by default to help reduce the potential impact on Catbox's services.
+- Litterbox is now disabled by default but remains available.
 
 ## TODO
 
