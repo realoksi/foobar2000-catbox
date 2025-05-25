@@ -39,15 +39,17 @@ fn perform(url: String, form: Form, user_agent: String) -> Result<String, Error>
 }
 
 pub struct Catbox {
-    user_agent: String,
+    pub user_agent: String,
+    pub user_hash: String,
 }
 
 impl Catbox {
-    pub fn new(user_agent: Option<String>) -> Self {
+    pub fn new(user_agent: Option<String>, user_hash: Option<String>) -> Self {
         Self {
             user_agent: user_agent.unwrap_or(
                 "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0".into(),
             ),
+            user_hash: user_hash.unwrap_or("".into()),
         }
     }
 }
@@ -65,6 +67,13 @@ impl Consumer for Catbox {
             .add()
             .unwrap();
 
+        if !self.user_hash.is_empty() {
+            form.part("userhash")
+                .contents(self.user_hash.as_bytes())
+                .add()
+                .unwrap();
+        }
+
         perform(
             "https://catbox.moe/user/api.php".into(),
             form,
@@ -76,15 +85,17 @@ impl Consumer for Catbox {
 pub struct Litterbox {
     pub expire_time: String,
     pub user_agent: String,
+    pub user_hash: String,
 }
 
 impl Litterbox {
-    pub fn new(expire_time: String, user_agent: Option<String>) -> Self {
+    pub fn new(expire_time: String, user_agent: Option<String>, user_hash: Option<String>) -> Self {
         Self {
             expire_time,
             user_agent: user_agent.unwrap_or(
                 "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0".into(),
             ),
+            user_hash: user_hash.unwrap_or("".into()),
         }
     }
 }
@@ -106,6 +117,13 @@ impl Consumer for Litterbox {
             .add()
             .unwrap();
 
+        if !self.user_hash.is_empty() {
+            form.part("userhash")
+                .contents(self.user_hash.as_bytes())
+                .add()
+                .unwrap();
+        }
+
         perform(
             "https://litterbox.catbox.moe/resources/internals/api.php".into(),
             form,
@@ -125,16 +143,22 @@ mod tests {
     fn test_consumers() {
         let sample_image = BASE64_STANDARD.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==").unwrap().to_vec();
 
-        assert!(Catbox::new(None).upload_image(sample_image.clone()).is_ok());
-
-        assert!(Litterbox::new(ExpireTime::default().to_string(), None)
+        assert!(Catbox::new(None, None)
             .upload_image(sample_image.clone())
             .is_ok());
+
+        assert!(
+            Litterbox::new(ExpireTime::default().to_string(), None, None)
+                .upload_image(sample_image.clone())
+                .is_ok()
+        );
     }
 
     #[test]
     fn test_perform() {
-        let user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0".to_string();
+        let user_agent =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
+                .to_string();
 
         assert!(perform(
             "https://example.com/".into(),
@@ -143,11 +167,6 @@ mod tests {
         )
         .is_ok());
 
-        assert!(perform(
-            "http://localhost/".into(),
-            Form::new(),
-            user_agent.clone(),
-        )
-        .is_err());
+        assert!(perform("http://localhost/".into(), Form::new(), user_agent.clone(),).is_err());
     }
 }
