@@ -12,7 +12,7 @@ codegen-units = 16
 version = "0.22.1"
 
 [dependencies.serde]
-version = "1.0.217"
+version = "1.0.219"
 default-features = false
 features = ["derive"]
 
@@ -20,17 +20,17 @@ features = ["derive"]
 version = "0.0.12"
 
 [dependencies.strum]
-version = "0.26.3"
+version = "0.27.1"
 default-features = false
 features = ["strum_macros"]
 
 [dependencies.strum_macros]
-version = "0.26.4"
+version = "0.27.1"
 
 [dependencies.curl]
 version = "0.4.47"
 
 [dependencies.image]
-version = "0.25.5"
+version = "0.25.6"
 default-features = false
 features = ["png", "jpeg", "webp"]
