@@ -36,5 +36,12 @@ resize_max_resolution:       # Options (sequence): width and height
     - 1024                   # Width (number)
     - 1024                   # Height (number)
 
+# USER HASH
+# Associate your uploaded images with your registered Catbox account. Uncomment the following
+# line by removing the # symbol, and replace the existing hash with your own. You can get
+# your user hash from https://catbox.moe/user/manage.php while logged in, and replace the following
+# example below with your own.
+# user_hash: "f3c9a4e81d2b76f59e40c8a3d"
+
 # --- MISCELLANEOUS
 user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
