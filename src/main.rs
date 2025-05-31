@@ -36,6 +36,10 @@ fn main() {
                 eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
                 exit(3);
             }
+            Error::UserHashError(_) => {
+                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
+                exit(4);
+            }
         }
     }
 
@@ -100,8 +104,12 @@ fn main() {
         true => Box::new(Litterbox::new(
             settings.litterbox_expire_time.to_string(),
             Some(settings.user_agent),
+            Some(settings.user_hash),
         )),
-        false => Box::new(Catbox::new(Some(settings.user_agent))),
+        false => Box::new(Catbox::new(
+            Some(settings.user_agent),
+            Some(settings.user_hash),
+        )),
     };
 
     match consumer.upload_image(cursor.into_inner()) {

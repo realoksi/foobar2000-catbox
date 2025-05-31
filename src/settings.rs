@@ -8,6 +8,7 @@ pub enum Error {
     EncodeFormatQualityError(u8),
     ResizeMaxResolutionZeroError([u32; 2]),
     ResizeMaxResolutionPowerError([u32; 2]),
+    UserHashError(u8),
 }
 
 impl error::Error for Error {}
@@ -32,6 +33,9 @@ impl fmt::Display for Error {
                     t[0], t[1]
                 )
             }
+            Error::UserHashError(t) => {
+                write!(f, "user_hash isn't 25 characters ({})", t)
+            }
         }
     }
 }
@@ -54,6 +58,8 @@ pub struct Settings {
     pub resize_max_resolution: [u32; 2],
     #[serde(default = "default_user_agent")]
     pub user_agent: String,
+    #[serde(default = "default_user_hash")]
+    pub user_hash: String,
     #[serde(flatten)]
     pub unexpected: HashMap<String, Value>,
 }
@@ -78,6 +84,10 @@ fn default_user_agent() -> String {
     "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0".into()
 }
 
+fn default_user_hash() -> String {
+    "".into()
+}
+
 impl Settings {
     #[allow(dead_code)]
     pub fn new() -> Self {
@@ -90,6 +100,7 @@ impl Settings {
             enable_resize: false,
             resize_max_resolution: default_resize_max_resolution(),
             user_agent: default_user_agent(),
+            user_hash: default_user_hash(),
             unexpected: HashMap::new(),
         }
     }
@@ -115,6 +126,11 @@ impl Settings {
             return Err(Error::ResizeMaxResolutionPowerError(
                 self.resize_max_resolution,
             ));
+        }
+
+        // NOTE: User hashes appear to be 25 characters - this needs to be verified
+        if !self.user_hash.is_empty() && self.user_hash.len() != 25 {
+            return Err(Error::UserHashError(self.user_hash.len() as u8));
         }
 
         Ok(())
@@ -200,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validation(){
+    fn test_validation() {
         let ok_case1 = r#"
         enable_litterbox: true
         litterbox_expire_time: "24h"
@@ -212,6 +228,7 @@ mod tests {
             - 1024
             - 1024
         user_agent: "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
+        user_hash: "f3c9a4e81d2b76f59e40c8a3d"
         "#;
 
         let settings = Settings::from_str(&ok_case1).unwrap();
@@ -321,6 +338,10 @@ mod tests {
         assert_eq!(
             Error::ResizeMaxResolutionPowerError([3, 5]).to_string(),
             "both values of resize_max_resolution must be a power-of-two (3, 5)"
+        );
+        assert_eq!(
+            Error::UserHashError(4).to_string(),
+            "user_hash isn't 25 characters (4)"
         );
     }
 }
