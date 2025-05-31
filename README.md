@@ -112,7 +112,7 @@ A[Load and validate settings]
 
 ## Notes
 
-- Litterbox is now disabled by default, it remains available.
+- Litterbox is now disabled by default, but remains available.
 
 ## TODO
 
