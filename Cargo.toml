@@ -9,7 +9,7 @@ lto = true
 codegen-units = 16
 
 [dependencies.base64]
-version = "0.22.1"
+version = "0.23.1"
 
 [dependencies.serde]
 version = "1.0.219"
@@ -17,15 +17,15 @@ default-features = false
 features = ["derive"]
 
 [dependencies.serde_yml]
-version = "0.0.12"
+version = "0.0.13"
 
 [dependencies.strum]
-version = "0.27.1"
+version = "0.28.0"
 default-features = false
 features = ["strum_macros"]
 
 [dependencies.strum_macros]
-version = "0.27.1"
+version = "0.28.0"
 
 [dependencies.curl]
 version = "0.4.47"
