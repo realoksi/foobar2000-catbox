@@ -6,7 +6,7 @@ edition = "2024"
 [profile.release]
 strip = true
 lto = true
-codegen-units = 16
+codegen-units = 1
 
 [dependencies.base64]
 version = "0.23.1"
