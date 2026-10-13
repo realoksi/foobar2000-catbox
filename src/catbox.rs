@@ -9,7 +9,7 @@ use std::time::Duration;
 const CATBOX_URL: &str = "https://catbox.moe/user/api.php";
 
 pub trait Service {
-    fn upload(&self, data: Vec<u8>) -> Result<String>;
+    fn upload_image(&self, data: Vec<u8>) -> Result<String>;
 }
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ impl Catbox {
 }
 
 impl Service for Catbox {
-    fn upload(&self, data: Vec<u8>) -> Result<String> {
+    fn upload_image(&self, data: Vec<u8>) -> Result<String> {
         let image_format = image::guess_format(&data)?;
         let mime_type = image_format.to_mime_type();
         let ext = image_format
