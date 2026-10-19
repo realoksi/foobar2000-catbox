@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use log::{debug, info};
 use reqwest::blocking::{
     Client,
@@ -70,7 +70,7 @@ impl Service for Catbox {
         let body = response.text()?;
 
         if !status_code.is_success() {
-            anyhow::bail!("Catbox error: {}, {}", status_code, body);
+            bail!("Catbox error: {}, {}", status_code, body);
         }
 
         info!("got link: \"{}\"", body);
