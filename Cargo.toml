@@ -11,29 +11,33 @@ lto = true
 panic = "abort"
 codegen-units = 1
 
-[dependencies.base64]
-version = "0.23.1"
+[dependencies.anyhow]
+version = "1.0.104"
+default-features = false
+
+[dependencies.toml]
+version = "1.1.8"
+default-features = false
+features = ["parse", "serde"]
 
 [dependencies.serde]
-version = "1.0.219"
+version = "1.0.229"
 default-features = false
 features = ["derive"]
 
-[dependencies.serde_yml]
-version = "0.0.13"
-
-[dependencies.strum]
-version = "0.28.0"
-default-features = false
-features = ["strum_macros"]
-
-[dependencies.strum_macros]
-version = "0.28.0"
-
-[dependencies.curl]
-version = "0.4.47"
-
 [dependencies.image]
-version = "0.25.6"
+version = "0.25.10"
 default-features = false
-features = ["png", "jpeg", "webp"]
+features = ["png", "jpeg"]
+
+[dependencies.webp]
+version = "0.3.1"
+
+[dependencies.reqwest]
+version = "0.13.5"
+default-features = false
+features = ["blocking", "default-tls", "multipart"]
+
+[dependencies.log]
+version = "0.4.34"
+default-features = false
