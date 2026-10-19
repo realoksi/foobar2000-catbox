@@ -8,6 +8,7 @@ repository = "https://github.com/realoksi/foobar2000-catbox"
 [profile.release]
 strip = true
 lto = true
+panic = "abort"
 codegen-units = 1
 
 [dependencies.base64]
