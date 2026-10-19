@@ -1,6 +1,6 @@
+use anyhow::{Result, bail};
 use image::codecs::png::{CompressionType, FilterType};
 use serde::Deserialize;
-use anyhow::{bail, Result};
 
 #[derive(Deserialize, Debug, Default, Clone)]
 #[serde(default)]
@@ -95,9 +95,9 @@ fn default_quality() -> u8 {
     90
 }
 
-impl Into<CompressionType> for PngCompressionType {
-    fn into(self) -> CompressionType {
-        match self {
+impl From<PngCompressionType> for CompressionType {
+    fn from(value: PngCompressionType) -> CompressionType {
+        match value {
             PngCompressionType::Fast => CompressionType::Fast,
             PngCompressionType::Best => CompressionType::Best,
             PngCompressionType::Uncompressed => CompressionType::Uncompressed,
@@ -105,9 +105,9 @@ impl Into<CompressionType> for PngCompressionType {
     }
 }
 
-impl Into<FilterType> for PngFilterType {
-    fn into(self) -> FilterType {
-        match self {
+impl From<PngFilterType> for FilterType {
+    fn from(value: PngFilterType) -> FilterType {
+        match value {
             PngFilterType::NoFilter => FilterType::NoFilter,
             PngFilterType::Sub => FilterType::Sub,
             PngFilterType::Up => FilterType::Up,
