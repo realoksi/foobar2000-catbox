@@ -73,7 +73,7 @@ impl Service for Catbox {
             bail!("Catbox error: {}, {}", status_code, body);
         }
 
-        info!("got link: \"{}\"", body);
+        info!("received: \"{}\"", body);
 
         Ok(body)
     }
