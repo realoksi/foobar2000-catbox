@@ -1,6 +1,7 @@
 target/
 *.profraw
 *.info
+.DS_Store
 
 # Visual Studio Code
 .vscode/
