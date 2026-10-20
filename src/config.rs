@@ -35,6 +35,16 @@ impl Default for EncodeConfig {
     }
 }
 
+impl EncodeConfig {
+    pub fn quality(&self) -> Option<u8> {
+        match self.format {
+            Format::Png => None,
+            Format::Jpg => self.jpg.and_then(|j| j.quality).or(Some(self.quality)),
+            Format::Webp => self.webp.and_then(|w| w.quality).or(Some(self.quality)),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum Format {
