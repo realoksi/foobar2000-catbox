@@ -3,7 +3,7 @@ use image::codecs::png::{CompressionType, FilterType};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Default, Clone)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct Config {
     pub encode: EncodeConfig,
     pub resize: ResizeConfig,
@@ -12,6 +12,7 @@ pub struct Config {
 
 #[derive(Deserialize, Debug, Default, Clone)]
 #[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct EncodeConfig {
     pub enabled: bool,
     pub format: Format,
@@ -33,7 +34,7 @@ pub enum Format {
 }
 
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct PngEncodeConfig {
     pub compression: PngCompressionType,
     pub filter: PngFilterType,
@@ -62,12 +63,14 @@ pub enum PngFilterType {
 
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct JpgEncodeConfig {
     pub quality: u8,
 }
 
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct WebpEncodeConfig {
     #[serde(default = "default_quality")]
     pub quality: u8,
@@ -75,18 +78,21 @@ pub struct WebpEncodeConfig {
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
+#[serde(default, deny_unknown_fields)]
 pub struct ResizeConfig {
     pub enabled: bool,
     pub max_resolution: Option<MaxResolution>,
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
+#[serde(default, deny_unknown_fields)]
 pub struct MaxResolution {
     pub width: u32,
     pub height: u32,
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
+#[serde(default, deny_unknown_fields)]
 pub struct CatboxConfig {
     pub user_hash: Option<String>,
 }
