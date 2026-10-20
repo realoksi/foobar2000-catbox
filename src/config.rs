@@ -128,7 +128,7 @@ pub struct CatboxConfig {
 }
 
 fn default_quality() -> u8 {
-    90
+    80
 }
 
 impl From<PngCompressionType> for CompressionType {
