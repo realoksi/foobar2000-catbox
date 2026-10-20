@@ -10,8 +10,7 @@ pub struct Config {
     pub catbox: CatboxConfig,
 }
 
-#[derive(Deserialize, Debug, Default, Clone)]
-#[serde(default)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct EncodeConfig {
     pub enabled: bool,
@@ -21,6 +20,19 @@ pub struct EncodeConfig {
     pub png: Option<PngEncodeConfig>,
     pub jpg: Option<JpgEncodeConfig>,
     pub webp: Option<WebpEncodeConfig>,
+}
+
+impl Default for EncodeConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            format: Default::default(),
+            quality: default_quality(),
+            png: None,
+            jpg: None,
+            webp: None,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
@@ -61,20 +73,28 @@ pub enum PngFilterType {
     Adaptive,
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
-#[serde(default)]
+#[derive(Deserialize, Debug, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct JpgEncodeConfig {
-    pub quality: u8,
+    pub quality: Option<u8>,
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
-#[serde(default)]
+impl Default for JpgEncodeConfig {
+    fn default() -> Self {
+        Self { quality: None }
+    }
+}
+
+#[derive(Deserialize, Debug, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct WebpEncodeConfig {
-    #[serde(default = "default_quality")]
-    pub quality: u8,
-    pub lossless: Option<bool>,
+    pub quality: Option<u8>,
+}
+
+impl Default for WebpEncodeConfig {
+    fn default() -> Self {
+        Self { quality: None }
+    }
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
