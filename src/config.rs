@@ -89,6 +89,7 @@ pub struct JpgEncodeConfig {
     pub quality: Option<u8>,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for JpgEncodeConfig {
     fn default() -> Self {
         Self { quality: None }
@@ -101,6 +102,7 @@ pub struct WebpEncodeConfig {
     pub quality: Option<u8>,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for WebpEncodeConfig {
     fn default() -> Self {
         Self { quality: None }
