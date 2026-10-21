@@ -110,10 +110,14 @@ impl Default for WebpEncodeConfig {
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
-#[serde(default, deny_unknown_fields)]
-pub struct ResizeConfig {
-    pub enabled: bool,
-    pub max_resolution: Option<MaxResolution>,
+#[serde(try_from = "RawResizeConfig")]
+pub enum ResizeConfig {
+    #[default]
+    Disabled,
+    Enabled {
+        max_resolution: MaxResolution,
+        preserve_aspect_ratio: bool,
+    },
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
@@ -121,6 +125,35 @@ pub struct ResizeConfig {
 pub struct MaxResolution {
     pub width: u32,
     pub height: u32,
+}
+
+#[derive(Deserialize, Debug, Default, Clone)]
+#[serde(default, deny_unknown_fields)]
+pub struct RawResizeConfig {
+    pub enabled: bool,
+    pub max_resolution: Option<MaxResolution>,
+    pub preserve_aspect_ratio: bool,
+}
+
+impl TryFrom<RawResizeConfig> for ResizeConfig {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RawResizeConfig) -> Result<Self> {
+        match (
+            value.enabled,
+            value.max_resolution,
+            value.preserve_aspect_ratio,
+        ) {
+            (false, _, _) => Ok(Self::Disabled),
+            (true, Some(max_resolution), preserve_aspect_ratio) => Ok(Self::Enabled {
+                max_resolution,
+                preserve_aspect_ratio,
+            }),
+            (true, None, _) => {
+                bail!("A maximum resolution is required while resize is enabled.")
+            }
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
