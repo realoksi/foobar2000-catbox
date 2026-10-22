@@ -127,6 +127,16 @@ pub struct MaxResolution {
     pub height: u32,
 }
 
+impl MaxResolution {
+    fn validate(&self) -> Result<()> {
+        if self.width > 0 && self.height > 0 {
+            Ok(())
+        } else {
+            bail!("Max resolution width and height must be greater than 0.")
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct RawResizeConfig {
@@ -144,11 +154,19 @@ impl TryFrom<RawResizeConfig> for ResizeConfig {
             value.max_resolution,
             value.preserve_aspect_ratio,
         ) {
-            (false, _, _) => Ok(Self::Disabled),
-            (true, Some(max_resolution), preserve_aspect_ratio) => Ok(Self::Enabled {
-                max_resolution,
-                preserve_aspect_ratio,
-            }),
+            (false, max_resolution, _) => {
+                if let Some(max_resolution) = max_resolution {
+                    max_resolution.validate()?;
+                }
+                Ok(Self::Disabled)
+            }
+            (true, Some(max_resolution), preserve_aspect_ratio) => {
+                max_resolution.validate()?;
+                Ok(Self::Enabled {
+                    max_resolution,
+                    preserve_aspect_ratio,
+                })
+            }
             (true, None, _) => {
                 bail!("A maximum resolution is required while resize is enabled.")
             }
