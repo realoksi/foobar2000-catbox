@@ -111,34 +111,17 @@ impl From<PngFilterType> for FilterType {
     }
 }
 
-#[derive(Deserialize, Debug, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct JpgEncodeConfig {
     pub quality: Option<u8>,
 }
 
-#[allow(clippy::derivable_impls)]
-impl Default for JpgEncodeConfig {
-    fn default() -> Self {
-        Self { quality: None }
-    }
-}
-
-#[derive(Deserialize, Debug, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct WebpEncodeConfig {
     pub quality: Option<u8>,
     pub lossless: bool,
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for WebpEncodeConfig {
-    fn default() -> Self {
-        Self {
-            quality: None,
-            lossless: false,
-        }
-    }
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
