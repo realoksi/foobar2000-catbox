@@ -65,8 +65,8 @@ pub struct PngEncodeConfig {
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PngCompressionType {
-    Fast,
     #[default]
+    Fast,
     Best,
     Uncompressed,
 }
