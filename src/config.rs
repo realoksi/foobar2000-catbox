@@ -218,6 +218,7 @@ fn check_quality(name: &str, quality: u8, errors: &mut Vec<String>) {
 }
 
 impl Config {
+    // TODO: move config validation into a raw config try_from, so it can be checked implicitly
     pub fn validate(self) -> Result<Self> {
         let mut errors = vec![];
 
