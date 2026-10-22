@@ -71,6 +71,18 @@ pub enum PngCompressionType {
     Uncompressed,
 }
 
+impl From<PngCompressionType> for CompressionType {
+    fn from(value: PngCompressionType) -> CompressionType {
+        match value {
+            PngCompressionType::Fast => CompressionType::Fast,
+            PngCompressionType::Best => CompressionType::Best,
+            PngCompressionType::Uncompressed => CompressionType::Uncompressed,
+        }
+    }
+}
+
+/// A mirror of `image::codecs::png::FilterType`, because the upstream type doesn't derive
+/// `serde`, and is non-exhaustive.
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PngFilterType {
@@ -81,6 +93,19 @@ pub enum PngFilterType {
     Paeth,
     #[default]
     Adaptive,
+}
+
+impl From<PngFilterType> for FilterType {
+    fn from(value: PngFilterType) -> FilterType {
+        match value {
+            PngFilterType::NoFilter => FilterType::NoFilter,
+            PngFilterType::Sub => FilterType::Sub,
+            PngFilterType::Up => FilterType::Up,
+            PngFilterType::Avg => FilterType::Avg,
+            PngFilterType::Paeth => FilterType::Paeth,
+            PngFilterType::Adaptive => FilterType::Adaptive,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Copy, Clone)]
@@ -186,29 +211,6 @@ pub struct CatboxConfig {
 
 fn default_quality() -> u8 {
     80
-}
-
-impl From<PngCompressionType> for CompressionType {
-    fn from(value: PngCompressionType) -> CompressionType {
-        match value {
-            PngCompressionType::Fast => CompressionType::Fast,
-            PngCompressionType::Best => CompressionType::Best,
-            PngCompressionType::Uncompressed => CompressionType::Uncompressed,
-        }
-    }
-}
-
-impl From<PngFilterType> for FilterType {
-    fn from(value: PngFilterType) -> FilterType {
-        match value {
-            PngFilterType::NoFilter => FilterType::NoFilter,
-            PngFilterType::Sub => FilterType::Sub,
-            PngFilterType::Up => FilterType::Up,
-            PngFilterType::Avg => FilterType::Avg,
-            PngFilterType::Paeth => FilterType::Paeth,
-            PngFilterType::Adaptive => FilterType::Adaptive,
-        }
-    }
 }
 
 fn check_quality(name: &str, quality: u8, errors: &mut Vec<String>) {
