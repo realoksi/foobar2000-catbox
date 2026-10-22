@@ -62,6 +62,9 @@ pub struct PngEncodeConfig {
     pub filter: PngFilterType,
 }
 
+/// A mirror of `image::codecs::png::CompressionType`, because the upstream type doesn't derive
+/// `serde`, and is non-exhaustive. This mirror omits the upstream `Default` and `Level(u8)`
+/// variants.
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PngCompressionType {
