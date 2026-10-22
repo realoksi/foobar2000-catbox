@@ -45,7 +45,7 @@ impl EncodeConfig {
     }
 }
 
-#[derive(Deserialize, Debug, Default, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum Format {
     Png,
@@ -65,7 +65,7 @@ pub struct PngEncodeConfig {
 /// A mirror of `image::codecs::png::CompressionType`, because the upstream type doesn't derive
 /// `serde`, and is non-exhaustive. This mirror omits the upstream `Default` and `Level(u8)`
 /// variants.
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PngCompressionType {
     #[default]
@@ -86,7 +86,7 @@ impl From<PngCompressionType> for CompressionType {
 
 /// A mirror of `image::codecs::png::FilterType`, because the upstream type doesn't derive
 /// `serde`, and is non-exhaustive.
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PngFilterType {
     NoFilter,
@@ -230,4 +230,41 @@ impl Config {
             bail!(errors.join("\n"))
         }
     }
+}
+
+#[test]
+fn sample_config_test() -> Result<()> {
+    const TOML: &str = include_str!("../config.toml");
+
+    let config = toml::from_str::<Config>(TOML)?.validate()?;
+
+    assert!(config.encode.enabled);
+    assert_eq!(config.encode.format, Format::Png);
+    assert!(config.encode.png.is_some());
+    assert!(config.encode.jpg.is_none());
+    assert!(config.encode.webp.is_none());
+    assert!(config.catbox.user_hash.is_none());
+
+    let png_config = config.encode.png.unwrap();
+
+    assert_eq!(png_config.compression, PngCompressionType::Best);
+    assert_eq!(png_config.filter, PngFilterType::NoFilter);
+
+    let resize_config = config.resize;
+
+    match resize_config {
+        ResizeConfig::Disabled => {
+            panic!("Resize should not be disabled.")
+        }
+        ResizeConfig::Enabled {
+            max_resolution,
+            preserve_aspect_ratio,
+        } => {
+            assert_eq!(max_resolution.height, 1024);
+            assert_eq!(max_resolution.width, 1024);
+            assert!(preserve_aspect_ratio);
+        }
+    }
+
+    Ok(())
 }

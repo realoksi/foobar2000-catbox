@@ -1,0 +1,14 @@
+# config.toml
+
+[encode]
+enabled = true
+format = "png"
+
+[encode.png]
+compression = "best"
+filter = "nofilter"
+
+[resize]
+enabled = true
+max_resolution = { width = 1024, height = 1024 }
+preserve_aspect_ratio = true
