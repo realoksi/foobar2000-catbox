@@ -207,12 +207,34 @@ impl From<PngFilterType> for FilterType {
     }
 }
 
+fn check_quality(name: &str, quality: u8, errors: &mut Vec<String>) {
+    if quality > 100 {
+        errors.push(format!("{} quality cannot be greater than 100", name));
+    }
+}
+
 impl Config {
     pub fn validate(self) -> Result<Self> {
-        if self.encode.quality > 100 {
-            bail!("Quality cannot be greater than 100.");
+        let mut errors = vec![];
+
+        check_quality("encode", self.encode.quality, &mut errors);
+
+        if let Some(jpg_encode_config) = self.encode.jpg
+            && let Some(q) = jpg_encode_config.quality
+        {
+            check_quality("jpg", q, &mut errors);
         }
 
-        Ok(self)
+        if let Some(webp_encode_config) = self.encode.webp
+            && let Some(q) = webp_encode_config.quality
+        {
+            check_quality("webp", q, &mut errors);
+        }
+
+        if errors.is_empty() {
+            Ok(self)
+        } else {
+            bail!(errors.join("\n"))
+        }
     }
 }
