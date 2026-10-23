@@ -14,6 +14,8 @@ use std::{
 };
 
 fn get_file_buf() -> Result<Vec<u8>> {
+    info!("waiting for stdin");
+
     let input: String = stdin().lock().lines().next().unwrap()?.trim().to_string();
 
     let file_path: &Path = Path::new(&input);
@@ -23,6 +25,8 @@ fn get_file_buf() -> Result<Vec<u8>> {
     }
 
     Ok(std::fs::read(&file_path)?)
+    info!("reading {:?}", file_path);
+
 }
 
 fn main() -> Result<()> {
