@@ -233,6 +233,13 @@ impl Config {
 }
 
 #[test]
+fn default_config_test() -> Result<()> {
+    Config::default().validate()?;
+
+    Ok(())
+}
+
+#[test]
 fn sample_config_test() -> Result<()> {
     const TOML: &str = include_str!("../config.toml");
 
