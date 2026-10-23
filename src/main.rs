@@ -46,9 +46,40 @@ fn main() -> Result<()> {
 
     let file_buf = get_file_buf()?;
     let format = guess_format(file_buf.as_slice())?;
-    let image_buf = image::load_from_memory_with_format(file_buf.as_slice(), format)?;
 
-    // TODO: Add a resize block *before* encoding.
+    let mut image_buf = image::load_from_memory_with_format(file_buf.as_slice(), format)?;
+
+    match config.resize {
+        ResizeConfig::Enabled {
+            max_resolution,
+            preserve_aspect_ratio,
+        } => {
+            if image_buf.width() > max_resolution.width
+                || image_buf.height() > max_resolution.height
+            {
+                if preserve_aspect_ratio {
+                    info!("resizing while preserving aspect ratio");
+                    image_buf = image_buf.resize(
+                        max_resolution.width,
+                        max_resolution.height,
+                        FilterType::Nearest,
+                    );
+                } else {
+                    info!("resizing to exact width and height");
+                    image_buf = image_buf.resize_exact(
+                        max_resolution.width,
+                        max_resolution.height,
+                        FilterType::Nearest,
+                    );
+                }
+            } else {
+                info!("image is within defined bounds. skipping resize");
+            }
+        }
+        _ => {
+            info!("resize not enabled")
+        }
+    }
 
     let last_buf = if config.encode.enabled {
         encode_image(&image_buf, &config.encode)?
