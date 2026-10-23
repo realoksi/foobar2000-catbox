@@ -3,15 +3,15 @@ mod config;
 mod encode;
 
 use crate::catbox::{Catbox, Service};
-use crate::config::Config;
+use crate::config::{Config, ResizeConfig};
 use crate::encode::encode_image;
 
 use anyhow::{Result, bail};
-use image::guess_format;
+use image::{guess_format, imageops::FilterType};
 use log::info;
 use std::{
     env, fs,
-    io::{BufRead, Cursor, stdin},
+    io::{BufRead, stdin},
     path::Path,
 };
 
