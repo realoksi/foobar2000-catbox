@@ -7,6 +7,11 @@ use reqwest::blocking::{
 use std::time::Duration;
 
 const CATBOX_URL: &str = "https://catbox.moe/user/api.php";
+const USER_AGENT: &str = concat!(
+    "foobar2000-catbox/",
+    env!("CARGO_PKG_VERSION"),
+    " (https://github.com/realoksi/foobar2000-catbox)"
+);
 
 pub trait Service {
     fn upload_image(&self, data: Vec<u8>) -> Result<String>;
@@ -19,9 +24,9 @@ pub struct Catbox {
 }
 
 impl Catbox {
-    pub fn new(user_agent: &str, user_hash: Option<String>) -> Result<Self> {
+    pub fn new(user_agent: Option<&str>, user_hash: Option<String>) -> Result<Self> {
         let client = Client::builder()
-            .user_agent(user_agent)
+            .user_agent(user_agent.unwrap_or(USER_AGENT))
             .connect_timeout(Duration::from_secs(10))
             .timeout(Duration::from_secs(30))
             .build()?;
