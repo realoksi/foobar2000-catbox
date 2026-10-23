@@ -1,4 +1,3 @@
-fn main() {
 mod catbox;
 mod config;
 mod encode;
