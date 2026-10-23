@@ -4,9 +4,12 @@ use image::{
     DynamicImage, EncodableLayout,
     codecs::{jpeg::JpegEncoder, png::PngEncoder},
 };
+use log::info;
 use std::io::Cursor;
 
 fn encode_png(buf: &DynamicImage, png_config: &PngEncodeConfig) -> Result<Vec<u8>> {
+    info!("encoding as png");
+
     let mut cursor = Cursor::new(Vec::new());
     let rgba8 = buf.to_rgba8();
 
@@ -20,6 +23,8 @@ fn encode_png(buf: &DynamicImage, png_config: &PngEncodeConfig) -> Result<Vec<u8
 }
 
 fn encode_jpg(buf: &DynamicImage, quality: u8) -> Result<Vec<u8>> {
+    info!("encoding as jpg");
+
     let mut cursor = Cursor::new(Vec::new());
     let rgb8 = buf.to_rgb8();
 
@@ -29,6 +34,8 @@ fn encode_jpg(buf: &DynamicImage, quality: u8) -> Result<Vec<u8>> {
 }
 
 fn encode_webp(buf: &DynamicImage, quality: f32, lossless: bool) -> Result<Vec<u8>> {
+    info!("encoding as webp");
+
     let rgba8 = buf.to_rgba8();
 
     let encoder = webp::Encoder::from_rgba(rgba8.as_bytes(), rgba8.width(), rgba8.height());
