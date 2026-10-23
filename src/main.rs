@@ -11,7 +11,7 @@ use image::{guess_format, imageops::FilterType};
 use log::info;
 use std::{
     env, fs,
-    io::{BufRead, stdin},
+    io::{BufRead, Cursor, stdin},
     path::Path,
 };
 
