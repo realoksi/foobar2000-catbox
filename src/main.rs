@@ -68,7 +68,7 @@ fn main() -> Result<()> {
 
     let cb = Catbox::new(None, config.user_hash)?;
 
-    let response = cb.upload_image(modified_buf.unwrap_or(file_buf))?;
+    let response = cb.upload_image(None, modified_buf.unwrap_or(file_buf))?;
 
     println!("{}", response);
 

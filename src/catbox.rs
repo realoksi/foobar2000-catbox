@@ -14,7 +14,7 @@ const USER_AGENT: &str = concat!(
 );
 
 pub trait Service {
-    fn upload_image(&self, data: Vec<u8>) -> Result<String>;
+    fn upload_image(&self, url: Option<String>, data: Vec<u8>) -> Result<String>;
 }
 
 #[derive(Debug)]
@@ -46,7 +46,7 @@ fn test_catbox_new() {
 }
 
 impl Service for Catbox {
-    fn upload_image(&self, data: Vec<u8>) -> Result<String> {
+    fn upload_image(&self, url: Option<String>, data: Vec<u8>) -> Result<String> {
         let image_format = image::guess_format(&data)?;
         let mime_type = image_format.to_mime_type();
         let ext = image_format
@@ -80,7 +80,11 @@ impl Service for Catbox {
 
         info!("uploading multipart form");
 
-        let response = self.client.post(CATBOX_URL).multipart(form).send()?;
+        let response = self
+            .client
+            .post(url.unwrap_or(CATBOX_URL.to_string()))
+            .multipart(form)
+            .send()?;
         let status_code = response.status();
         let body = response.text()?;
 
@@ -91,5 +95,51 @@ impl Service for Catbox {
         info!("received: \"{}\"", body);
 
         Ok(body)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use image::codecs::png::{CompressionType, FilterType, PngEncoder};
+    use image::{ColorType, DynamicImage};
+    use std::io::Cursor;
+
+    #[test]
+    fn test_catbox_upload_image() {
+        let mut server_guard = mockito::Server::new();
+
+        let mock = server_guard
+            .mock("POST", "/api.php")
+            .with_status(200)
+            .with_header("content-type", "text/html; charset=UTF-8")
+            .with_body("https://files.catbox.moe/3e28av.jpg")
+            .create();
+
+        let url = server_guard.url();
+
+        let mut cursor = Cursor::new(Vec::new());
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+
+        rgba8
+            .write_with_encoder(PngEncoder::new_with_quality(
+                &mut cursor,
+                CompressionType::Best,
+                FilterType::Adaptive,
+            ))
+            .unwrap();
+
+        let cb = Catbox::new(None, None).unwrap();
+        let response = cb
+            .upload_image(
+                Some(format!("{}/api.php", url).to_string()),
+                cursor.into_inner(),
+            )
+            .unwrap();
+
+        println!("Response: {:?}", response);
+
+        mock.assert();
     }
 }
