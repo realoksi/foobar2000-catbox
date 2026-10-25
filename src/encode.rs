@@ -59,3 +59,49 @@ pub fn encode_image(buf: &DynamicImage, encode_config: &TranscodeConfig) -> Resu
         ),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::ColorType;
+
+    #[test]
+    fn test_encode_png() {
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+
+        encode_png(&rgba8, &PngTranscodeConfig::default()).unwrap();
+    }
+
+    #[test]
+    fn test_encode_jpg() {
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+
+        encode_jpg(&rgba8, 80).unwrap();
+    }
+
+    #[test]
+    fn test_encode_webp() {
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+
+        encode_webp(&rgba8, 90.0, false).unwrap();
+    }
+
+    #[test]
+    fn test_encode_image() {
+        let mut encode_config = TranscodeConfig {
+            format: Format::Png,
+            ..Default::default()
+        };
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+
+        encode_image(&rgba8, &encode_config).unwrap();
+
+        encode_config.format = Format::Jpg;
+
+        encode_image(&rgba8, &encode_config).unwrap();
+
+        encode_config.format = Format::Webp;
+
+        encode_image(&rgba8, &encode_config).unwrap();
+    }
+}
