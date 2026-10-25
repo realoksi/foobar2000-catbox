@@ -35,6 +35,16 @@ impl Catbox {
     }
 }
 
+#[test]
+fn test_catbox_new() {
+    const USER_AGENT: &str = "foobar2000-catbox/test_catbox_new";
+    let user_hash = "fa06e93babb0163ad24951b25".to_string(); // not a real hash
+
+    let cb = Catbox::new(Some(USER_AGENT), Some(user_hash.clone())).unwrap();
+
+    assert_eq!(cb.user_hash, Some(user_hash));
+}
+
 impl Service for Catbox {
     fn upload_image(&self, data: Vec<u8>) -> Result<String> {
         let image_format = image::guess_format(&data)?;
