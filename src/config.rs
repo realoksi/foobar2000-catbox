@@ -1,42 +1,53 @@
-use anyhow::{Result, bail};
 use image::codecs::png::{CompressionType, FilterType};
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug, Default, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
-    pub encode: EncodeConfig,
-    pub resize: ResizeConfig,
-    pub catbox: CatboxConfig,
+    pub transcode: Option<TranscodeConfig>,
+    pub user_hash: Option<String>,
+    pub timeout: Option<u32>,
+    pub connection_timeout: Option<u32>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            transcode: None,
+            user_hash: None,
+            timeout: Some(30),
+            connection_timeout: Some(10),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, PartialEq, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
-pub struct EncodeConfig {
-    pub enabled: bool,
+pub struct TranscodeConfig {
     pub format: Format,
     #[serde(default = "default_quality")]
     pub quality: u8,
-    pub png: Option<PngEncodeConfig>,
-    pub jpg: Option<JpgEncodeConfig>,
-    pub webp: Option<WebpEncodeConfig>,
+    pub png: Option<PngTranscodeConfig>,
+    pub jpg: Option<JpgTranscodeConfig>,
+    pub webp: Option<WebpTranscodeConfig>,
+    pub clamp: Option<ClampTranscodeConfig>,
 }
 
-impl Default for EncodeConfig {
+impl Default for TranscodeConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
             format: Default::default(),
             quality: default_quality(),
             png: None,
             jpg: None,
             webp: None,
+            clamp: None,
         }
     }
 }
 
-impl EncodeConfig {
-    pub fn quality(&self) -> Option<u8> {
+impl TranscodeConfig {
+    pub fn effective_quality(&self) -> Option<u8> {
         match self.format {
             Format::Png => None,
             Format::Jpg => self.jpg.and_then(|j| j.quality).or(Some(self.quality)),
@@ -55,9 +66,9 @@ pub enum Format {
     Webp,
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
-pub struct PngEncodeConfig {
+pub struct PngTranscodeConfig {
     pub compression: PngCompressionType,
     pub filter: PngFilterType,
 }
@@ -111,167 +122,155 @@ impl From<PngFilterType> for FilterType {
     }
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
-pub struct JpgEncodeConfig {
+pub struct JpgTranscodeConfig {
     pub quality: Option<u8>,
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
-pub struct WebpEncodeConfig {
+pub struct WebpTranscodeConfig {
     pub quality: Option<u8>,
     pub lossless: bool,
 }
 
-#[derive(Deserialize, Debug, Default, Clone)]
-#[serde(try_from = "RawResizeConfig")]
-pub enum ResizeConfig {
-    #[default]
-    Disabled,
-    Enabled {
-        max_resolution: MaxResolution,
-        preserve_aspect_ratio: bool,
-    },
+#[derive(Deserialize, Debug, PartialEq, Copy, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct ClampTranscodeConfig {
+    pub max_resolution: MaxResolution,
 }
 
-#[derive(Deserialize, Debug, Default, Clone)]
-#[serde(default, deny_unknown_fields)]
+#[derive(Deserialize, Debug, PartialEq, Copy, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct MaxResolution {
     pub width: u32,
     pub height: u32,
-}
-
-impl MaxResolution {
-    fn validate(&self) -> Result<()> {
-        if self.width > 0 && self.height > 0 {
-            Ok(())
-        } else {
-            bail!("Max resolution width and height must be greater than 0.")
-        }
-    }
-}
-
-#[derive(Deserialize, Debug, Default, Clone)]
-#[serde(default, deny_unknown_fields)]
-pub struct RawResizeConfig {
-    pub enabled: bool,
-    pub max_resolution: Option<MaxResolution>,
-    pub preserve_aspect_ratio: bool,
-}
-
-impl TryFrom<RawResizeConfig> for ResizeConfig {
-    type Error = anyhow::Error;
-
-    fn try_from(value: RawResizeConfig) -> Result<Self> {
-        match (
-            value.enabled,
-            value.max_resolution,
-            value.preserve_aspect_ratio,
-        ) {
-            (false, max_resolution, _) => {
-                if let Some(max_resolution) = max_resolution {
-                    max_resolution.validate()?;
-                }
-                Ok(Self::Disabled)
-            }
-            (true, Some(max_resolution), preserve_aspect_ratio) => {
-                max_resolution.validate()?;
-                Ok(Self::Enabled {
-                    max_resolution,
-                    preserve_aspect_ratio,
-                })
-            }
-            (true, None, _) => {
-                bail!("A maximum resolution is required while resize is enabled.")
-            }
-        }
-    }
-}
-
-#[derive(Deserialize, Debug, Default, Clone)]
-#[serde(default, deny_unknown_fields)]
-pub struct CatboxConfig {
-    pub user_hash: Option<String>,
 }
 
 fn default_quality() -> u8 {
     80
 }
 
-fn check_quality(name: &str, quality: u8, errors: &mut Vec<String>) {
-    if quality > 100 {
-        errors.push(format!("{} quality cannot be greater than 100", name));
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl Config {
-    // TODO: move config validation into a raw config try_from, so it can be checked implicitly
-    pub fn validate(self) -> Result<Self> {
-        let mut errors = vec![];
+    use anyhow::Result;
 
-        check_quality("encode", self.encode.quality, &mut errors);
+    #[test]
+    fn empty_config_test() -> Result<()> {
+        const TOML: &str = r#""#;
 
-        if let Some(jpg_encode_config) = self.encode.jpg
-            && let Some(q) = jpg_encode_config.quality
-        {
-            check_quality("jpg", q, &mut errors);
-        }
+        assert_eq!(toml::from_str::<Config>(TOML)?, Default::default());
 
-        if let Some(webp_encode_config) = self.encode.webp
-            && let Some(q) = webp_encode_config.quality
-        {
-            check_quality("webp", q, &mut errors);
-        }
-
-        if errors.is_empty() {
-            Ok(self)
-        } else {
-            bail!(errors.join("\n"))
-        }
-    }
-}
-
-#[test]
-fn default_config_test() -> Result<()> {
-    Config::default().validate()?;
-
-    Ok(())
-}
-
-#[test]
-fn sample_config_test() -> Result<()> {
-    const TOML: &str = include_str!("../config.toml");
-
-    let config = toml::from_str::<Config>(TOML)?.validate()?;
-
-    assert!(config.encode.enabled);
-    assert_eq!(config.encode.format, Format::Png);
-    assert!(config.encode.png.is_some());
-    assert!(config.encode.jpg.is_none());
-    assert!(config.encode.webp.is_none());
-    assert!(config.catbox.user_hash.is_none());
-
-    let png_config = config.encode.png.unwrap();
-
-    assert_eq!(png_config.compression, PngCompressionType::Best);
-    assert_eq!(png_config.filter, PngFilterType::NoFilter);
-
-    let resize_config = config.resize;
-
-    match resize_config {
-        ResizeConfig::Disabled => {
-            panic!("Resize should not be disabled.")
-        }
-        ResizeConfig::Enabled {
-            max_resolution,
-            preserve_aspect_ratio,
-        } => {
-            assert_eq!(max_resolution.height, 1024);
-            assert_eq!(max_resolution.width, 1024);
-            assert!(preserve_aspect_ratio);
-        }
+        Ok(())
     }
 
-    Ok(())
+    #[test]
+    fn minimal_config_test() -> Result<()> {
+        const TOML: &str = r#"
+        [transcode]
+        format = "webp"
+
+        [transcode.webp]
+        lossless = true
+        "#;
+
+        let config = toml::from_str::<Config>(TOML)?;
+
+        let transcode_config = config.transcode.unwrap();
+
+        assert_eq!(transcode_config.format, Format::Webp);
+
+        let webp_config = transcode_config.webp.unwrap();
+
+        assert!(webp_config.lossless);
+
+        Ok(())
+    }
+
+    #[test]
+    fn override_config_test() -> Result<()> {
+        const TOML: &str = r#"
+        [transcode]
+        format = "jpg"
+        quality = 60
+
+        [transcode.jpg]
+        quality = 80
+        "#;
+
+        let config = toml::from_str::<Config>(TOML)?;
+
+        let transcode_config = config.transcode.unwrap();
+
+        assert_eq!(transcode_config.format, Format::Jpg);
+        assert_eq!(transcode_config.quality, 60);
+
+        let jpg_config = transcode_config.jpg.unwrap();
+
+        assert_eq!(jpg_config.quality, Some(80));
+
+        assert_eq!(80, transcode_config.effective_quality().unwrap());
+
+        Ok(())
+    }
+
+    #[test]
+    fn sample_config_test() -> Result<()> {
+        const TOML: &str = r#"
+        user_hash = "fa06e93babb0163ad24951b25"
+        timeout = 30
+        connection_timeout = 10
+
+        [transcode]
+        format = "png"
+        quality = 80
+
+        [transcode.png]
+        compression = "best"
+        filter = "adaptive"
+
+        [transcode.jpg]
+        quality = 80
+
+        [transcode.webp]
+        lossless = true
+
+        [transcode.clamp]
+        max_resolution = { width = 1024, height = 1024 }
+        "#;
+
+        let config = toml::from_str::<Config>(TOML)?;
+
+        let transcode_config = config.transcode.unwrap();
+
+        assert_eq!(transcode_config.format, Format::Png);
+
+        let jpg_config = transcode_config.jpg.unwrap();
+
+        assert_eq!(jpg_config.quality, Some(80));
+
+        let webp_config = transcode_config.webp.unwrap();
+
+        assert_eq!(webp_config.quality, None);
+        assert!(webp_config.lossless);
+
+        assert_eq!(config.user_hash, Some("fa06e93babb0163ad24951b25".to_string()));
+
+        let png_config = transcode_config.png.unwrap();
+
+        assert_eq!(png_config.compression, PngCompressionType::Best);
+        assert_eq!(png_config.filter, PngFilterType::Adaptive);
+
+        let clamp_config = transcode_config.clamp.unwrap();
+
+        assert_eq!(clamp_config.max_resolution.height, 1024);
+        assert_eq!(clamp_config.max_resolution.width, 1024);
+
+        println!("{:#?}", config);
+
+        Ok(())
+    }
 }
