@@ -42,6 +42,11 @@ fn get_config() -> Result<Config> {
     }
 }
 
+#[test]
+fn test_get_config(){
+    get_config().unwrap();
+}
+
 fn main() -> Result<()> {
     env_logger::init();
 
