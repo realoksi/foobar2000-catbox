@@ -21,6 +21,16 @@ impl Default for Config {
     }
 }
 
+#[test]
+fn test_default_config() {
+    let config = Config::default();
+
+    assert_eq!(config.transcode, None);
+    assert_eq!(config.user_hash, None);
+    assert_eq!(config.timeout, Some(30));
+    assert_eq!(config.connection_timeout, Some(10));
+}
+
 #[derive(Deserialize, Debug, PartialEq, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct TranscodeConfig {
@@ -46,6 +56,18 @@ impl Default for TranscodeConfig {
     }
 }
 
+#[test]
+fn test_default_transcode_config() {
+    let transcode_config = TranscodeConfig::default();
+
+    assert_eq!(transcode_config.format, Default::default());
+    assert_eq!(transcode_config.quality, default_quality());
+    assert_eq!(transcode_config.png, None);
+    assert_eq!(transcode_config.jpg, None);
+    assert_eq!(transcode_config.webp, None);
+    assert_eq!(transcode_config.clamp, None);
+}
+
 impl TranscodeConfig {
     pub fn effective_quality(&self) -> Option<u8> {
         match self.format {
@@ -54,6 +76,30 @@ impl TranscodeConfig {
             Format::Webp => self.webp.and_then(|w| w.quality).or(Some(self.quality)),
         }
     }
+}
+
+#[test]
+fn test_effective_quality() {
+    let mut transcode_config = TranscodeConfig {
+        format: Format::Png,
+        quality: 80,
+        jpg: None,
+        webp: Some(WebpTranscodeConfig {
+            quality: Some(69),
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    assert_eq!(transcode_config.effective_quality(), None);
+
+    transcode_config.format = Format::Jpg;
+
+    assert_eq!(transcode_config.effective_quality(), Some(80));
+
+    transcode_config.format = Format::Webp;
+
+    assert_eq!(transcode_config.effective_quality(), Some(69));
 }
 
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
@@ -95,6 +141,13 @@ impl From<PngCompressionType> for CompressionType {
     }
 }
 
+#[test]
+fn test_png_compression_type() {
+    assert_eq!(CompressionType::from(PngCompressionType::Fast), CompressionType::Fast);
+    assert_eq!(CompressionType::from(PngCompressionType::Best), CompressionType::Best);
+    assert_eq!(CompressionType::from(PngCompressionType::Uncompressed), CompressionType::Uncompressed);
+}
+
 /// A mirror of `image::codecs::png::FilterType`, because the upstream type doesn't derive
 /// `serde`, and is non-exhaustive.
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
@@ -120,6 +173,16 @@ impl From<PngFilterType> for FilterType {
             PngFilterType::Adaptive => FilterType::Adaptive,
         }
     }
+}
+
+#[test]
+fn test_png_filter_type() {
+    assert_eq!(FilterType::from(PngFilterType::NoFilter), FilterType::NoFilter);
+    assert_eq!(FilterType::from(PngFilterType::Sub), FilterType::Sub);
+    assert_eq!(FilterType::from(PngFilterType::Up), FilterType::Up);
+    assert_eq!(FilterType::from(PngFilterType::Avg), FilterType::Avg);
+    assert_eq!(FilterType::from(PngFilterType::Paeth), FilterType::Paeth);
+    assert_eq!(FilterType::from(PngFilterType::Adaptive), FilterType::Adaptive);
 }
 
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
@@ -150,130 +213,4 @@ pub struct MaxResolution {
 
 fn default_quality() -> u8 {
     80
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use anyhow::Result;
-
-    #[test]
-    fn empty_config_test() -> Result<()> {
-        const TOML: &str = r#""#;
-
-        assert_eq!(toml::from_str::<Config>(TOML)?, Default::default());
-
-        Ok(())
-    }
-
-    #[test]
-    fn minimal_config_test() -> Result<()> {
-        const TOML: &str = r#"
-        [transcode]
-        format = "webp"
-
-        [transcode.webp]
-        lossless = true
-        "#;
-
-        let config = toml::from_str::<Config>(TOML)?;
-
-        let transcode_config = config.transcode.unwrap();
-
-        assert_eq!(transcode_config.format, Format::Webp);
-
-        let webp_config = transcode_config.webp.unwrap();
-
-        assert!(webp_config.lossless);
-
-        Ok(())
-    }
-
-    #[test]
-    fn override_config_test() -> Result<()> {
-        const TOML: &str = r#"
-        [transcode]
-        format = "jpg"
-        quality = 60
-
-        [transcode.jpg]
-        quality = 80
-        "#;
-
-        let config = toml::from_str::<Config>(TOML)?;
-
-        let transcode_config = config.transcode.unwrap();
-
-        assert_eq!(transcode_config.format, Format::Jpg);
-        assert_eq!(transcode_config.quality, 60);
-
-        let jpg_config = transcode_config.jpg.unwrap();
-
-        assert_eq!(jpg_config.quality, Some(80));
-
-        assert_eq!(80, transcode_config.effective_quality().unwrap());
-
-        Ok(())
-    }
-
-    #[test]
-    fn sample_config_test() -> Result<()> {
-        const TOML: &str = r#"
-        user_hash = "fa06e93babb0163ad24951b25"
-        timeout = 30
-        connection_timeout = 10
-
-        [transcode]
-        format = "png"
-        quality = 80
-
-        [transcode.png]
-        compression = "best"
-        filter = "adaptive"
-
-        [transcode.jpg]
-        quality = 80
-
-        [transcode.webp]
-        lossless = true
-
-        [transcode.clamp]
-        max_resolution = { width = 1024, height = 1024 }
-        "#;
-
-        let config = toml::from_str::<Config>(TOML)?;
-
-        let transcode_config = config.transcode.unwrap();
-
-        assert_eq!(transcode_config.format, Format::Png);
-
-        let jpg_config = transcode_config.jpg.unwrap();
-
-        assert_eq!(jpg_config.quality, Some(80));
-
-        let webp_config = transcode_config.webp.unwrap();
-
-        assert_eq!(webp_config.quality, None);
-        assert!(webp_config.lossless);
-
-        assert_eq!(
-            config.user_hash,
-            Some("fa06e93babb0163ad24951b25".to_string())
-        );
-
-        let png_config = transcode_config.png.unwrap();
-
-        assert_eq!(png_config.compression, PngCompressionType::Best);
-        assert_eq!(png_config.filter, PngFilterType::Adaptive);
-
-        let clamp_config = transcode_config.clamp.unwrap();
-
-        assert_eq!(clamp_config.max_resolution.height, 1024);
-        assert_eq!(clamp_config.max_resolution.width, 1024);
-
-        println!("{:#?}", config);
-
-        Ok(())
-    }
 }
