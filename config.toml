@@ -3,12 +3,18 @@
 [encode]
 enabled = true
 format = "png"
+timeout = 30 # in seconds, default=30
+connection_timeout = 10 # in seconds, default=10
 
-[encode.png]
-compression = "best"
-filter = "nofilter"
+[transcode]
+format = "png" # png, jpg, jpeg, or webp
+quality = 80 # a fallback when specific format quality isn't specified
+
+[transcode.png]
+compression = "best" # fast, best, or uncompressed
+filter = "adaptive" # nofilter, sub, up, avg, paeth, or adaptive
 
 [resize]
 enabled = true
+[transcode.clamp]
 max_resolution = { width = 1024, height = 1024 }
-preserve_aspect_ratio = true
