@@ -6,6 +6,7 @@ use image::{
 };
 use log::info;
 use std::io::Cursor;
+use webp::Encoder as WebpEncoder;
 
 fn encode_png(buf: &DynamicImage, png_config: &PngTranscodeConfig) -> Result<Vec<u8>> {
     info!("encoding as png");
@@ -38,7 +39,7 @@ fn encode_webp(buf: &DynamicImage, quality: f32, lossless: bool) -> Result<Vec<u
 
     let rgba8 = buf.to_rgba8();
 
-    let encoder = webp::Encoder::from_rgba(rgba8.as_bytes(), rgba8.width(), rgba8.height());
+    let encoder = WebpEncoder::from_rgba(rgba8.as_bytes(), rgba8.width(), rgba8.height());
 
     let webp_memory = encoder
         .encode_simple(lossless, quality)
