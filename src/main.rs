@@ -31,18 +31,21 @@ fn get_file_buf() -> Result<Vec<u8>> {
     Ok(fs::read(file_path)?)
 }
 
+fn get_config() -> Result<Config> {
+    let config_path = env::current_exe()?.parent().unwrap().join("config.toml");
+
+    match fs::read_to_string(&config_path) {
+        Ok(buf) => toml::from_str(&buf)
+            .with_context(|| format!("couldn't parse config file {:?}", config_path)),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(Default::default()),
+        Err(e) => Err(e).with_context(|| format!("couldn't read config file {:?}", config_path)),
+    }
+}
+
 fn main() -> Result<()> {
     env_logger::init();
 
-    let config_path = env::current_exe()?.parent().unwrap().join("config.toml");
-
-    let config = if config_path.exists() {
-        info!("using config from disk");
-        toml::from_str::<Config>(fs::read_to_string(&config_path)?.as_str())?.validate()?
-    } else {
-        info!("fallback to default config");
-        Config::default()
-    };
+    let config = get_config()?;
 
     let file_buf = get_file_buf()?;
     let format = guess_format(file_buf.as_slice())?;
