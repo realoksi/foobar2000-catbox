@@ -3,15 +3,15 @@ mod config;
 mod encode;
 
 use crate::catbox::{Catbox, Service};
-use crate::config::{Config, ResizeConfig};
+use crate::config::Config;
 use crate::encode::encode_image;
 
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use image::{guess_format, imageops::FilterType};
 use log::info;
 use std::{
-    env, fs,
-    io::{BufRead, Cursor, stdin},
+    env, fs, io,
+    io::{BufRead, stdin},
     path::Path,
 };
 
@@ -48,54 +48,27 @@ fn main() -> Result<()> {
     let config = get_config()?;
 
     let file_buf = get_file_buf()?;
-    let format = guess_format(file_buf.as_slice())?;
+    let mut modified_buf = None;
 
-    let mut image_buf = image::load_from_memory_with_format(file_buf.as_slice(), format)?;
+    if let Some(transcode_config) = config.transcode {
+        let format = guess_format(&file_buf)?;
+        let mut image_buf = image::load_from_memory_with_format(&file_buf, format)?;
 
-    match config.resize {
-        ResizeConfig::Enabled {
-            max_resolution,
-            preserve_aspect_ratio,
-        } => {
-            if image_buf.width() > max_resolution.width
-                || image_buf.height() > max_resolution.height
-            {
-                if preserve_aspect_ratio {
-                    info!("resizing while preserving aspect ratio");
-                    image_buf = image_buf.resize(
-                        max_resolution.width,
-                        max_resolution.height,
-                        FilterType::Nearest,
-                    );
-                } else {
-                    info!("resizing to exact width and height");
-                    image_buf = image_buf.resize_exact(
-                        max_resolution.width,
-                        max_resolution.height,
-                        FilterType::Nearest,
-                    );
-                }
-            } else {
-                info!("image is within defined bounds. skipping resize");
+        if let Some(clamp_config) = transcode_config.clamp {
+            let max_width = clamp_config.max_resolution.width;
+            let max_height = clamp_config.max_resolution.height;
+
+            if image_buf.width() > max_width || image_buf.height() > max_height {
+                image_buf = image_buf.resize(max_width, max_height, FilterType::Nearest);
             }
         }
-        _ => {
-            info!("resize not enabled")
-        }
+
+        modified_buf = Some(encode_image(&image_buf, &transcode_config)?);
     }
 
-    let last_buf = if config.encode.enabled {
-        encode_image(&image_buf, &config.encode)?
-    } else {
-        let mut cursor = Cursor::new(Vec::new());
+    let cb = Catbox::new(None, config.user_hash)?;
 
-        image_buf.write_to(&mut cursor, format)?;
-        cursor.into_inner()
-    };
-
-    let cb = Catbox::new(None, config.catbox.user_hash)?;
-
-    let response = cb.upload_image(last_buf)?;
+    let response = cb.upload_image(modified_buf.unwrap_or(file_buf))?;
 
     println!("{}", response);
 
