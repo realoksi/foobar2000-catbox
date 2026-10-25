@@ -257,7 +257,10 @@ mod tests {
         assert_eq!(webp_config.quality, None);
         assert!(webp_config.lossless);
 
-        assert_eq!(config.user_hash, Some("fa06e93babb0163ad24951b25".to_string()));
+        assert_eq!(
+            config.user_hash,
+            Some("fa06e93babb0163ad24951b25".to_string())
+        );
 
         let png_config = transcode_config.png.unwrap();
 
