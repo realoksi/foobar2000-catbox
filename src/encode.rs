@@ -1,4 +1,4 @@
-use crate::config::{EncodeConfig, Format, PngEncodeConfig};
+use crate::config::{Format, PngTranscodeConfig, TranscodeConfig};
 use anyhow::{Result, anyhow};
 use image::{
     DynamicImage, EncodableLayout,
@@ -7,7 +7,7 @@ use image::{
 use log::info;
 use std::io::Cursor;
 
-fn encode_png(buf: &DynamicImage, png_config: &PngEncodeConfig) -> Result<Vec<u8>> {
+fn encode_png(buf: &DynamicImage, png_config: &PngTranscodeConfig) -> Result<Vec<u8>> {
     info!("encoding as png");
 
     let mut cursor = Cursor::new(Vec::new());
@@ -47,13 +47,13 @@ fn encode_webp(buf: &DynamicImage, quality: f32, lossless: bool) -> Result<Vec<u
     Ok(webp_memory.to_vec())
 }
 
-pub fn encode_image(buf: &DynamicImage, encode_config: &EncodeConfig) -> Result<Vec<u8>> {
+pub fn encode_image(buf: &DynamicImage, encode_config: &TranscodeConfig) -> Result<Vec<u8>> {
     match encode_config.format {
         Format::Png => encode_png(buf, &encode_config.png.unwrap_or_default()),
-        Format::Jpg => encode_jpg(buf, encode_config.quality().unwrap()),
+        Format::Jpg => encode_jpg(buf, encode_config.effective_quality().unwrap()),
         Format::Webp => encode_webp(
             buf,
-            encode_config.quality().unwrap().into(),
+            encode_config.effective_quality().unwrap().into(),
             encode_config.webp.unwrap_or_default().lossless,
         ),
     }
