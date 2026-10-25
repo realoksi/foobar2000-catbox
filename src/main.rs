@@ -43,7 +43,7 @@ fn get_config() -> Result<Config> {
 }
 
 #[test]
-fn test_get_config(){
+fn test_get_config() {
     get_config().unwrap();
 }
 
