@@ -143,9 +143,18 @@ impl From<PngCompressionType> for CompressionType {
 
 #[test]
 fn test_png_compression_type() {
-    assert_eq!(CompressionType::from(PngCompressionType::Fast), CompressionType::Fast);
-    assert_eq!(CompressionType::from(PngCompressionType::Best), CompressionType::Best);
-    assert_eq!(CompressionType::from(PngCompressionType::Uncompressed), CompressionType::Uncompressed);
+    assert_eq!(
+        CompressionType::from(PngCompressionType::Fast),
+        CompressionType::Fast
+    );
+    assert_eq!(
+        CompressionType::from(PngCompressionType::Best),
+        CompressionType::Best
+    );
+    assert_eq!(
+        CompressionType::from(PngCompressionType::Uncompressed),
+        CompressionType::Uncompressed
+    );
 }
 
 /// A mirror of `image::codecs::png::FilterType`, because the upstream type doesn't derive
@@ -177,12 +186,18 @@ impl From<PngFilterType> for FilterType {
 
 #[test]
 fn test_png_filter_type() {
-    assert_eq!(FilterType::from(PngFilterType::NoFilter), FilterType::NoFilter);
+    assert_eq!(
+        FilterType::from(PngFilterType::NoFilter),
+        FilterType::NoFilter
+    );
     assert_eq!(FilterType::from(PngFilterType::Sub), FilterType::Sub);
     assert_eq!(FilterType::from(PngFilterType::Up), FilterType::Up);
     assert_eq!(FilterType::from(PngFilterType::Avg), FilterType::Avg);
     assert_eq!(FilterType::from(PngFilterType::Paeth), FilterType::Paeth);
-    assert_eq!(FilterType::from(PngFilterType::Adaptive), FilterType::Adaptive);
+    assert_eq!(
+        FilterType::from(PngFilterType::Adaptive),
+        FilterType::Adaptive
+    );
 }
 
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
