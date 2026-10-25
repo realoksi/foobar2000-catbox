@@ -6,8 +6,8 @@ use serde::Deserialize;
 pub struct Config {
     pub transcode: Option<TranscodeConfig>,
     pub user_hash: Option<String>,
-    pub timeout: Option<u32>,
-    pub connection_timeout: Option<u32>,
+    pub timeout: Option<u64>,
+    pub connection_timeout: Option<u64>,
 }
 
 impl Default for Config {

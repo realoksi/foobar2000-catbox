@@ -71,7 +71,7 @@ fn main() -> Result<()> {
         modified_buf = Some(encode_image(&image_buf, &transcode_config)?);
     }
 
-    let cb = Catbox::new(None, config.user_hash)?;
+    let cb = Catbox::new(None, config.user_hash, config.timeout, config.connection_timeout)?;
 
     let response = cb.upload_image(None, modified_buf.unwrap_or(file_buf))?;
 

@@ -24,11 +24,11 @@ pub struct Catbox {
 }
 
 impl Catbox {
-    pub fn new(user_agent: Option<&str>, user_hash: Option<String>) -> Result<Self> {
+    pub fn new(user_agent: Option<&str>, user_hash: Option<String>, timeout: Option<u64>, connect_timeout: Option<u64>) -> Result<Self> {
         let client = Client::builder()
             .user_agent(user_agent.unwrap_or(USER_AGENT))
-            .connect_timeout(Duration::from_secs(10))
-            .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(timeout.unwrap_or(10)))
+            .timeout(Duration::from_secs(connect_timeout.unwrap_or(30)))
             .build()?;
 
         Ok(Self { client, user_hash })
@@ -40,7 +40,7 @@ fn test_catbox_new() {
     const USER_AGENT: &str = "foobar2000-catbox/test_catbox_new";
     let user_hash = "fa06e93babb0163ad24951b25".to_string(); // not a real hash
 
-    let cb = Catbox::new(Some(USER_AGENT), Some(user_hash.clone())).unwrap();
+    let cb = Catbox::new(None, Some(user_hash.clone()), None, None).unwrap();
 
     assert_eq!(cb.user_hash, Some(user_hash));
 }
@@ -130,7 +130,7 @@ mod tests {
             ))
             .unwrap();
 
-        let cb = Catbox::new(None, None).unwrap();
+        let cb = Catbox::new(None, None, None, None).unwrap();
         let response = cb
             .upload_image(
                 Some(format!("{}/api.php", url).to_string()),
