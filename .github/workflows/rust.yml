@@ -37,7 +37,7 @@ jobs:
                 files: lcov.info
             - name: 🧪 Run multiple samples
               run: |
-                for sample in ./samples/*.jpg; do
+                for sample in ./images/*.jpg; do
                   stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
                   if [[ $stdout =~ ^https:\/\/files.catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
                     echo "$stdout 🎉 Yes"
