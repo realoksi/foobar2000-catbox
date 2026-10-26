@@ -74,34 +74,13 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let config = get_config()?;
-
-    let file_buf = get_file_buf()?;
-    let mut modified_buf = None;
-
-    if let Some(transcode_config) = config.transcode {
-        let format = guess_format(&file_buf)?;
-        let mut image_buf = image::load_from_memory_with_format(&file_buf, format)?;
-
-        if let Some(clamp_config) = transcode_config.clamp {
-            let max_width = clamp_config.max_resolution.width;
-            let max_height = clamp_config.max_resolution.height;
-
-            if image_buf.width() > max_width || image_buf.height() > max_height {
-                image_buf = image_buf.resize(max_width, max_height, FilterType::CatmullRom);
-            }
-        }
-
-        modified_buf = Some(encode_image(&image_buf, &transcode_config)?);
-    }
-
-    let cb = Catbox::new(
+    let service = Catbox::new(
         None,
-        config.user_hash,
+        config.user_hash.clone(),
         config.timeout,
         config.connection_timeout,
     )?;
-
-    let response = cb.upload_image(None, modified_buf.unwrap_or(file_buf))?;
+    let response = run(stdin().lock(), config, service)?;
 
     println!("{}", response);
 
