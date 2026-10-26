@@ -6,13 +6,17 @@ use crate::catbox::{Catbox, Service};
 use crate::config::{ClampTranscodeConfig, Config, TranscodeConfig};
 use crate::encode::encode_image;
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use image::{DynamicImage, guess_format, imageops::FilterType};
-use std::{env, fs, io, io::BufRead, path::Path};
+use std::{
+    env, fs, io,
+    io::{BufRead, stdin},
+    path::{Path, PathBuf},
+};
 
-fn read_path_line(input: impl BufRead) -> Result<String> {
-    Ok(input.trim().to_string())
+fn read_path_line(input: impl BufRead) -> Result<PathBuf> {
     let input = input.lines().next().with_context(|| "No input")??;
+    Ok(input.trim().into())
 }
 
 fn load_file(path: &Path) -> Result<Vec<u8>> {
