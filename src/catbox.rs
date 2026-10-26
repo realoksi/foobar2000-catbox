@@ -35,16 +35,6 @@ impl Catbox {
     }
 }
 
-#[test]
-fn test_catbox_new() {
-    const USER_AGENT: &str = "foobar2000-catbox/test_catbox_new";
-    let user_hash = "fa06e93babb0163ad24951b25".to_string(); // not a real hash
-
-    let cb = Catbox::new(None, Some(user_hash.clone()), None, None).unwrap();
-
-    assert_eq!(cb.user_hash, Some(user_hash));
-}
-
 impl Service for Catbox {
     fn upload_image(&self, url: Option<String>, data: Vec<u8>) -> Result<String> {
         let image_format = image::guess_format(&data)?;
@@ -105,6 +95,15 @@ mod tests {
     use image::codecs::png::{CompressionType, FilterType, PngEncoder};
     use image::{ColorType, DynamicImage};
     use std::io::Cursor;
+
+    #[test]
+    fn test_catbox_new() {
+        let user_hash = "fa06e93babb0163ad24951b25".to_string(); // not a real hash
+
+        let cb = Catbox::new(None, Some(user_hash.clone()), None, None).unwrap();
+
+        assert_eq!(cb.user_hash, Some(user_hash));
+    }
 
     #[test]
     fn test_catbox_upload_image() {
