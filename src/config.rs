@@ -21,16 +21,6 @@ impl Default for Config {
     }
 }
 
-#[test]
-fn test_default_config() {
-    let config = Config::default();
-
-    assert_eq!(config.transcode, None);
-    assert_eq!(config.user_hash, None);
-    assert_eq!(config.timeout, Some(30));
-    assert_eq!(config.connection_timeout, Some(10));
-}
-
 #[derive(Deserialize, Debug, PartialEq, Copy, Clone)]
 #[serde(default, deny_unknown_fields)]
 pub struct TranscodeConfig {
@@ -56,18 +46,6 @@ impl Default for TranscodeConfig {
     }
 }
 
-#[test]
-fn test_default_transcode_config() {
-    let transcode_config = TranscodeConfig::default();
-
-    assert_eq!(transcode_config.format, Default::default());
-    assert_eq!(transcode_config.quality, default_quality());
-    assert_eq!(transcode_config.png, None);
-    assert_eq!(transcode_config.jpg, None);
-    assert_eq!(transcode_config.webp, None);
-    assert_eq!(transcode_config.clamp, None);
-}
-
 impl TranscodeConfig {
     pub fn effective_quality(&self) -> Option<u8> {
         match self.format {
@@ -76,30 +54,6 @@ impl TranscodeConfig {
             Format::Webp => self.webp.and_then(|w| w.quality).or(Some(self.quality)),
         }
     }
-}
-
-#[test]
-fn test_effective_quality() {
-    let mut transcode_config = TranscodeConfig {
-        format: Format::Png,
-        quality: 80,
-        jpg: None,
-        webp: Some(WebpTranscodeConfig {
-            quality: Some(69),
-            ..Default::default()
-        }),
-        ..Default::default()
-    };
-
-    assert_eq!(transcode_config.effective_quality(), None);
-
-    transcode_config.format = Format::Jpg;
-
-    assert_eq!(transcode_config.effective_quality(), Some(80));
-
-    transcode_config.format = Format::Webp;
-
-    assert_eq!(transcode_config.effective_quality(), Some(69));
 }
 
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
@@ -141,22 +95,6 @@ impl From<PngCompressionType> for CompressionType {
     }
 }
 
-#[test]
-fn test_png_compression_type() {
-    assert_eq!(
-        CompressionType::from(PngCompressionType::Fast),
-        CompressionType::Fast
-    );
-    assert_eq!(
-        CompressionType::from(PngCompressionType::Best),
-        CompressionType::Best
-    );
-    assert_eq!(
-        CompressionType::from(PngCompressionType::Uncompressed),
-        CompressionType::Uncompressed
-    );
-}
-
 /// A mirror of `image::codecs::png::FilterType`, because the upstream type doesn't derive
 /// `serde`, and is non-exhaustive.
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
@@ -182,22 +120,6 @@ impl From<PngFilterType> for FilterType {
             PngFilterType::Adaptive => FilterType::Adaptive,
         }
     }
-}
-
-#[test]
-fn test_png_filter_type() {
-    assert_eq!(
-        FilterType::from(PngFilterType::NoFilter),
-        FilterType::NoFilter
-    );
-    assert_eq!(FilterType::from(PngFilterType::Sub), FilterType::Sub);
-    assert_eq!(FilterType::from(PngFilterType::Up), FilterType::Up);
-    assert_eq!(FilterType::from(PngFilterType::Avg), FilterType::Avg);
-    assert_eq!(FilterType::from(PngFilterType::Paeth), FilterType::Paeth);
-    assert_eq!(
-        FilterType::from(PngFilterType::Adaptive),
-        FilterType::Adaptive
-    );
 }
 
 #[derive(Deserialize, Debug, Default, PartialEq, Copy, Clone)]
@@ -228,4 +150,87 @@ pub struct MaxResolution {
 
 fn default_quality() -> u8 {
     80
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = Config::default();
+
+        assert_eq!(config.transcode, None);
+        assert_eq!(config.user_hash, None);
+        assert_eq!(config.timeout, Some(30));
+        assert_eq!(config.connection_timeout, Some(10));
+    }
+
+    #[test]
+    fn test_default_transcode_config() {
+        let transcode_config = TranscodeConfig::default();
+
+        assert_eq!(transcode_config.format, Default::default());
+        assert_eq!(transcode_config.quality, default_quality());
+        assert_eq!(transcode_config.png, None);
+        assert_eq!(transcode_config.jpg, None);
+        assert_eq!(transcode_config.webp, None);
+        assert_eq!(transcode_config.clamp, None);
+    }
+
+    #[test]
+    fn test_effective_quality() {
+        let mut transcode_config = TranscodeConfig {
+            format: Format::Png,
+            quality: 80,
+            jpg: None,
+            webp: Some(WebpTranscodeConfig {
+                quality: Some(69),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        assert_eq!(transcode_config.effective_quality(), None);
+
+        transcode_config.format = Format::Jpg;
+
+        assert_eq!(transcode_config.effective_quality(), Some(80));
+
+        transcode_config.format = Format::Webp;
+
+        assert_eq!(transcode_config.effective_quality(), Some(69));
+    }
+
+    #[test]
+    fn test_png_compression_type() {
+        assert_eq!(
+            CompressionType::from(PngCompressionType::Fast),
+            CompressionType::Fast
+        );
+        assert_eq!(
+            CompressionType::from(PngCompressionType::Best),
+            CompressionType::Best
+        );
+        assert_eq!(
+            CompressionType::from(PngCompressionType::Uncompressed),
+            CompressionType::Uncompressed
+        );
+    }
+
+    #[test]
+    fn test_png_filter_type() {
+        assert_eq!(
+            FilterType::from(PngFilterType::NoFilter),
+            FilterType::NoFilter
+        );
+        assert_eq!(FilterType::from(PngFilterType::Sub), FilterType::Sub);
+        assert_eq!(FilterType::from(PngFilterType::Up), FilterType::Up);
+        assert_eq!(FilterType::from(PngFilterType::Avg), FilterType::Avg);
+        assert_eq!(FilterType::from(PngFilterType::Paeth), FilterType::Paeth);
+        assert_eq!(
+            FilterType::from(PngFilterType::Adaptive),
+            FilterType::Adaptive
+        );
+    }
 }
