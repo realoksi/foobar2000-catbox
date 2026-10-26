@@ -3,32 +3,47 @@ mod config;
 mod encode;
 
 use crate::catbox::{Catbox, Service};
-use crate::config::Config;
+use crate::config::{ClampTranscodeConfig, Config, TranscodeConfig};
 use crate::encode::encode_image;
 
-use anyhow::{Context, Result, bail};
-use image::{guess_format, imageops::FilterType};
-use log::info;
-use std::{
-    env, fs, io,
-    io::{BufRead, stdin},
-    path::Path,
-};
+use anyhow::{Context, Result, anyhow};
+use image::{DynamicImage, guess_format, imageops::FilterType};
+use std::{env, fs, io, io::BufRead, path::Path};
 
-fn get_file_buf() -> Result<Vec<u8>> {
-    info!("waiting for stdin");
+fn read_path_line(input: impl BufRead) -> Result<String> {
+    let input = input
+        .lines()
+        .next()
+        .with_context(|| anyhow!("No input"))??;
+    Ok(input.trim().to_string())
+}
 
-    let input: String = stdin().lock().lines().next().unwrap()?.trim().to_string();
+fn load_file(path: &Path) -> Result<Vec<u8>> {
+    fs::read(path).with_context(|| anyhow!("Failed to read file: {:?}", path))
+}
 
-    let file_path = Path::new(&input);
+fn clamp(img: DynamicImage, clamp_config: &ClampTranscodeConfig) -> DynamicImage {
+    let (max_width, max_height) = (
+        clamp_config.max_resolution.width,
+        clamp_config.max_resolution.height,
+    );
 
-    if !file_path.exists() {
-        bail!("File not found");
+    if img.width() > max_width || img.height() > max_height {
+        img.resize(max_width, max_height, FilterType::CatmullRom)
+    } else {
+        img
+    }
+}
+
+fn transcode(buf: &[u8], transcode_config: &TranscodeConfig) -> Result<Vec<u8>> {
+    let format = guess_format(&buf)?;
+    let mut img = image::load_from_memory_with_format(buf, format)?;
+
+    if let Some(clamp_config) = transcode_config.clamp {
+        img = clamp(img, &clamp_config);
     }
 
-    info!("reading {:?}", file_path);
-
-    Ok(fs::read(file_path)?)
+    encode_image(&img, &transcode_config)
 }
 
 fn get_config() -> Result<Config> {
