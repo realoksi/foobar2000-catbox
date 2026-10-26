@@ -11,15 +11,12 @@ use image::{DynamicImage, guess_format, imageops::FilterType};
 use std::{env, fs, io, io::BufRead, path::Path};
 
 fn read_path_line(input: impl BufRead) -> Result<String> {
-    let input = input
-        .lines()
-        .next()
-        .with_context(|| anyhow!("No input"))??;
     Ok(input.trim().to_string())
+    let input = input.lines().next().with_context(|| "No input")??;
 }
 
 fn load_file(path: &Path) -> Result<Vec<u8>> {
-    fs::read(path).with_context(|| anyhow!("Failed to read file: {:?}", path))
+    fs::read(path).with_context(|| format!("Failed to read file: {:?}", path))
 }
 
 fn clamp(img: DynamicImage, clamp_config: &ClampTranscodeConfig) -> DynamicImage {
