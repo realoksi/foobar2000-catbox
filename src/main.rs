@@ -58,6 +58,18 @@ fn get_config() -> Result<Config> {
     }
 }
 
+fn run(input: impl BufRead, config: Config, service: impl Service) -> Result<String> {
+    let path = read_path_line(input)?;
+    let file_buf = load_file(&path)?;
+
+    let payload = match config.transcode {
+        Some(transcode_config) => transcode(&file_buf, &transcode_config)?,
+        None => file_buf,
+    };
+
+    service.upload_image(None, payload)
+}
+
 fn main() -> Result<()> {
     env_logger::init();
 
