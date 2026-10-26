@@ -157,6 +157,64 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_complete_config() {
+        let config = toml::from_str::<Config>(
+            r#"
+        user_hash = "fa06e93babb0163ad24951b25"
+        timeout = 20
+        connection_timeout = 999
+
+        [transcode]
+        format = "jpg"
+        quality = 30
+
+        [transcode.png]
+        compression = "fast"
+        filter = "nofilter"
+
+        [transcode.jpg]
+        quality = 99
+
+        [transcode.webp]
+        quality = 100
+        lossless = true
+
+        [transcode.clamp]
+        max_resolution = { width = 1024, height = 1024 }
+        "#,
+        )
+        .unwrap();
+
+        assert_eq!(config.user_hash, Some("fa06e93babb0163ad24951b25".into()));
+        assert_eq!(config.timeout, Some(20));
+        assert_eq!(config.connection_timeout, Some(999));
+
+        let transcode_config = config.transcode.unwrap();
+        assert_eq!(transcode_config.format, Format::Jpg);
+        assert_eq!(transcode_config.quality, 30);
+
+        let png_config = transcode_config.png.unwrap();
+        assert_eq!(png_config.compression, PngCompressionType::Fast);
+        assert_eq!(png_config.filter, PngFilterType::NoFilter);
+
+        let jpg_config = transcode_config.jpg.unwrap();
+        assert_eq!(jpg_config.quality, Some(99));
+
+        let webp_config = transcode_config.webp.unwrap();
+        assert_eq!(webp_config.quality, Some(100));
+        assert!(webp_config.lossless);
+
+        let clamp_config = transcode_config.clamp.unwrap();
+        assert_eq!(
+            clamp_config.max_resolution,
+            MaxResolution {
+                width: 1024,
+                height: 1024
+            }
+        );
+    }
+
+    #[test]
     fn test_default_config() {
         let config = Config::default();
 
