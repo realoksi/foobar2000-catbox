@@ -37,14 +37,14 @@ fn clamp(img: DynamicImage, clamp_config: &ClampTranscodeConfig) -> DynamicImage
 }
 
 fn transcode(buf: &[u8], transcode_config: &TranscodeConfig) -> Result<Vec<u8>> {
-    let format = guess_format(&buf)?;
+    let format = guess_format(buf)?;
     let mut img = image::load_from_memory_with_format(buf, format)?;
 
     if let Some(clamp_config) = transcode_config.clamp {
         img = clamp(img, &clamp_config);
     }
 
-    encode_image(&img, &transcode_config)
+    encode_image(&img, transcode_config)
 }
 
 fn get_config() -> Result<Config> {
