@@ -59,7 +59,7 @@ fn main() -> Result<()> {
             let max_height = clamp_config.max_resolution.height;
 
             if image_buf.width() > max_width || image_buf.height() > max_height {
-                image_buf = image_buf.resize(max_width, max_height, FilterType::Nearest);
+                image_buf = image_buf.resize(max_width, max_height, FilterType::CatmullRom);
             }
         }
 
