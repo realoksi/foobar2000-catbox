@@ -67,23 +67,23 @@ mod tests {
 
     #[test]
     fn test_encode_png() {
-        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgba8);
 
         encode_png(&rgba8, &PngTranscodeConfig::default()).unwrap();
     }
 
     #[test]
     fn test_encode_jpg() {
-        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+        let rgb8 = DynamicImage::new(32, 32, ColorType::Rgb8);
 
-        encode_jpg(&rgba8, 80).unwrap();
+        encode_jpg(&rgb8, 80).unwrap();
     }
 
     #[test]
     fn test_encode_webp() {
-        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+        let rgb8 = DynamicImage::new(32, 32, ColorType::Rgb8);
 
-        encode_webp(&rgba8, 90.0, false).unwrap();
+        encode_webp(&rgb8, 90.0, false).unwrap();
     }
 
     #[test]
@@ -92,7 +92,7 @@ mod tests {
             format: Format::Png,
             ..Default::default()
         };
-        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+        let rgba8 = DynamicImage::new(32, 32, ColorType::Rgba8);
 
         encode_image(&rgba8, &encode_config).unwrap();
 
