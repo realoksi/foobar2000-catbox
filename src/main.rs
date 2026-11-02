@@ -90,9 +90,105 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::{Format, JpgTranscodeConfig, MaxResolution};
+    use image::{
+        ColorType,
+        codecs::png::{CompressionType, PngEncoder},
+    };
+    use std::{
+        io::{BufReader, Cursor},
+        str::FromStr,
+    };
+
+    const CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
+
+    fn temp_config_path() -> Result<PathBuf> {
+        PathBuf::from_str(format!("{}/config.toml", CARGO_MANIFEST_DIR).as_str())
+            .with_context(|| "Bad path")
+    }
+
+    /// creates a blank png
+    fn temp_image_buf(w: u32, h: u32, color_type: ColorType) -> Vec<u8> {
+        let img = DynamicImage::new(w, h, color_type);
+
+        let mut cursor = Cursor::new(Vec::new());
+
+        img.write_with_encoder(PngEncoder::new_with_quality(
+            &mut cursor,
+            CompressionType::Best,
+            image::codecs::png::FilterType::Adaptive,
+        ))
+        .unwrap();
+
+        cursor.into_inner()
+    }
+
+    #[test]
+    fn test_read_path_line() {
+        let input = BufReader::new("    /my/path/line/image.jpg    \n".as_bytes());
+
+        let path_line = read_path_line(input).unwrap();
+
+        assert_eq!(path_line.as_os_str(), "/my/path/line/image.jpg");
+    }
+
+    #[test]
+    fn test_load_file() {
+        load_file(&PathBuf::from(format!(
+            "{}/config.toml",
+            CARGO_MANIFEST_DIR
+        )))
+        .unwrap();
+    }
+
+    #[test]
+    fn test_clamp() {
+        let rgb8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+        let clamp_config = ClampTranscodeConfig {
+            max_resolution: MaxResolution {
+                width: 16,
+                height: 16,
+            },
+        };
+
+        let result_1 = clamp(rgb8, &clamp_config);
+
+        assert_eq!(result_1.width(), 16);
+        assert_eq!(result_1.height(), 16);
+
+        let result_2 = clamp(result_1, &clamp_config);
+
+        assert_eq!(result_2.width(), 16);
+        assert_eq!(result_2.height(), 16);
+    }
+
+    #[test]
+    fn test_transcode() {
+        let buf = temp_image_buf(32, 32, ColorType::Rgb8);
+
+        let transcode_config = TranscodeConfig {
+            format: Format::Jpg,
+            quality: 80,
+            png: None,
+            jpg: Some(JpgTranscodeConfig {
+                ..Default::default()
+            }),
+            webp: None,
+            clamp: Some(ClampTranscodeConfig {
+                max_resolution: MaxResolution {
+                    width: 16,
+                    height: 16,
+                },
+            }),
+        };
+
+        transcode(&buf, &transcode_config).unwrap();
+    }
 
     #[test]
     fn test_get_config() {
-        get_config().unwrap();
+        let good_config_path = temp_config_path().unwrap();
+
+        get_config(good_config_path).unwrap();
     }
 }
