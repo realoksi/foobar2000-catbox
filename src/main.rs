@@ -47,14 +47,13 @@ fn transcode(buf: &[u8], transcode_config: &TranscodeConfig) -> Result<Vec<u8>> 
     encode_image(&img, transcode_config)
 }
 
-fn get_config() -> Result<Config> {
-    let config_path = env::current_exe()?.parent().unwrap().join("config.toml");
-
-    match fs::read_to_string(&config_path) {
-        Ok(buf) => toml::from_str(&buf)
-            .with_context(|| format!("couldn't parse config file {:?}", config_path)),
+fn get_config(path: PathBuf) -> Result<Config> {
+    match fs::read_to_string(&path) {
+        Ok(buf) => {
+            toml::from_str(&buf).with_context(|| format!("Couldn't parse config file {:?}", path))
+        }
         Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(Default::default()),
-        Err(e) => Err(e).with_context(|| format!("couldn't read config file {:?}", config_path)),
+        Err(e) => Err(e).with_context(|| format!("Couldn't read config file {:?}", path)),
     }
 }
 
@@ -73,7 +72,8 @@ fn run(input: impl BufRead, config: Config, service: impl Service) -> Result<Str
 fn main() -> Result<()> {
     env_logger::init();
 
-    let config = get_config()?;
+    let config_path = env::current_exe()?.parent().unwrap().join("config.toml");
+    let config = get_config(config_path)?;
     let service = Catbox::new(
         None,
         config.user_hash.clone(),
