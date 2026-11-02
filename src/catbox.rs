@@ -24,7 +24,12 @@ pub struct Catbox {
 }
 
 impl Catbox {
-    pub fn new(user_agent: Option<&str>, user_hash: Option<String>, timeout: Option<u64>, connect_timeout: Option<u64>) -> Result<Self> {
+    pub fn new(
+        user_agent: Option<&str>,
+        user_hash: Option<String>,
+        timeout: Option<u64>,
+        connect_timeout: Option<u64>,
+    ) -> Result<Self> {
         let client = Client::builder()
             .user_agent(user_agent.unwrap_or(USER_AGENT))
             .connect_timeout(Duration::from_secs(connect_timeout.unwrap_or(30)))
