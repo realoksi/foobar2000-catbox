@@ -1,88 +1,71 @@
-
 # foobar2000-catbox
 
-[![rust](https://img.shields.io/badge/Rust-%23000000.svg?e&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![release](https://img.shields.io/github/v/release/realoksi/foobar2000-catbox)](https://github.com/realoksi/foobar2000-catbox/releases/latest)
-[![workflow](https://github.com/realoksi/foobar2000-catbox/actions/workflows/rust.yml/badge.svg)](https://github.com/realoksi/foobar2000-catbox/actions/workflows/rust.yml)
-[![codecov](https://codecov.io/gh/realoksi/foobar2000-catbox/graph/badge.svg?token=O2ENML3DAY)](https://codecov.io/gh/realoksi/foobar2000-catbox)
+*A helper application designed to upload album art to [catbox.moe](https://catbox.moe/) for use
+with [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) or its forks.*
 
-## About
+[![Rust](https://img.shields.io/badge/Rust-D34516.svg?logo=rust&logoColor=white)](https://rust-lang.org/)
+![License](https://img.shields.io/badge/license-MIT_or_Apache--2.0-blue)
+[![Coverage](https://img.shields.io/codecov/c/gh/realoksi/foobar2000-catbox)](https://app.codecov.io/gh/realoksi/foobar2000-catbox)
+[![Build](https://img.shields.io/github/actions/workflow/status/realoksi/foobar2000-catbox/rust.yml)](https://github.com/realoksi/foobar2000-catbox/actions/workflows/rust.yml)
+[![Release](https://img.shields.io/github/v/release/realoksi/foobar2000-catbox)](https://github.com/realoksi/foobar2000-catbox/releases/latest)
+![Downloads](https://img.shields.io/github/downloads/realoksi/foobar2000-catbox/total)
 
-This is a helper application that uploads images to Catbox, and is meant to be invoked by the [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) plugin.
+---
 
-## Compiling
+## Install
 
-### Windows
+Download the [latest release](https://github.com/realoksi/foobar2000-catbox/releases), or
+[compile it from source](#compile). Then follow the setup instructions
+[here](https://theqwertiest.github.io/foo_discord_rich/docs/features/advanced_users/art_upload/).
 
-Use [rustup](https://www.rust-lang.org/tools/install) to download an appropriate toolchain for Windows.
-Don't forget to install [git](https://git-scm.com/downloads/win) if you're cloning this repository.
+See the [configuration](#configure) section for optional settings.
 
-- Clone the repository with git:
+## Compile
+
+Get [rustup](https://www.rust-lang.org/tools/install) and [git](https://git-scm.com/downloads).
+
+Open a terminal.
+
+Clone the repository
+or [directly download](https://github.com/realoksi/foobar2000-catbox/archive/refs/heads/production.zip) and unzip it.
 
 ```sh
 git clone https://github.com/realoksi/foobar2000-catbox.git
 ```
 
-- `cd` into the cloned directory:
+`cd` into the directory.
 
 ```sh
 cd foobar2000-catbox
 ```
 
-- Compile the application:
+### Windows
+
+Compile the application using the release profile.
 
 ```sh
 cargo build -r
 ```
 
-> [!NOTE]
-> `-r` compiles the application as a release build, which excludes unecessary debug information and performs important optimizations
+Find the executable at `target/release/foobar2000-catbox.exe`
 
-So long as there are no errors while compiling, you'll end up with a build available at `target/release/foobar2000-catbox.exe`.
+### Cross-compiling from Linux
 
-## Installation
-
-You can download the latest release build of `foobar2000-catbox.exe` from the repository [releases](https://github.com/realoksi/foobar2000-catbox/releases) if you aren't compiling. Otherwise, use the compiled executable from the previous section. We're also assuming you have [foo_discord_rich](https://github.com/theqwertiest/foo_discord_rich) already installed.
-
-- Move executable somewhere permanent
+Add a Windows target with rustup.
 
 ```sh
-mv foobar2000-catbox.exe C:\
+rustup target add x86_64-pc-windows-gnu
 ```
 
-> [!NOTE]
-> Although the previous command moves it to the root of the C drive, you can put it anywhere as long as the path specified later in foobar2000 is accurate
+You will also need [mingw-w64](https://www.mingw-w64.org/). See their **Getting Started** section for your distribution.
 
-- Open foobar2000
+Compile a release build with the Windows target specified.
 
-- Open the `Preferences` menu from the `File` dropdown in the toolbar
+```sh
+cargo build --target x86_64-pc-windows-gnu -r
+```
 
-> [!TIP]
-> You can also use the Ctrl+P shortcut
-
-- On the left-side list under `Tools` click `Discord Rich Presence Integration`
-
-- Navigate to the `Advanced` tab
-
-- Check the box labeled: `Upload and display art (disables MusicBrainz fetcher)`
-
-- Specify the executable path in the `Upload command` textbox.
-
-> [!TIP]
-> For example, if the executable is at the root of our C drive like demonstrated earlier, we'd use "C:\foobar2000-catbox.exe" as the `Upload command` value (quotes included)
-
-## Usage
-
-After installation, cover art will be uploaded automatically for each song/album that's played. *No further configuration from this point on is necessary to have a working instance.*
-
-### Settings (optional)
-
-As with the previous version of this uploader, you can fine-tune its behavior further, now through the use of a YAML file that accompanies the executable.
-
-|Feature|Description|
-|-|-|
-|Encoding format and quality|Adjust encoding format and quality to get your desired speed/image fidelity. Currently, you can upload cover art as a JPG, PNG, or WEBP - as these are the formats supported by Discord. You may only currently control the quality level of JPGs.|
-|Downscaling|Automatically downscale images that exceed a specified threshold.|
+Find the executable at `target/x86_64-pc-windows-gnu/release/foobar2000-catbox.exe`
 
 > [!WARNING]
 > The WEBP encoder used at this time is **lossless only**. Using this **will** increase the file size of the uploaded image - slowing down both the upload and download speed of your cover art.
