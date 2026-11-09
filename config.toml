@@ -1,15 +1,8 @@
 # config.toml
 
-timeout = 30 # in seconds, default=30
-connection_timeout = 10 # in seconds, default=10
-
 [transcode]
-format = "png" # png, jpg, jpeg, or webp
-quality = 80 # a fallback when specific format quality isn't specified
-
-[transcode.png]
-compression = "best" # fast, best, or uncompressed
-filter = "adaptive" # nofilter, sub, up, avg, paeth, or adaptive
+format = "jpg"
+quality = 80
 
 [transcode.clamp]
-max_resolution = { width = 1024, height = 1024 }
+max_resolution = { width = 500, height = 500 }
