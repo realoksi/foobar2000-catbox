@@ -66,3 +66,68 @@ cargo build --target x86_64-pc-windows-gnu -r
 ```
 
 Find the executable at `target/x86_64-pc-windows-gnu/release/foobar2000-catbox.exe`
+
+## Configure
+
+To configure the output, create a `config.toml` file in the same directory as `foobar2000-catbox.exe`.
+
+See the following table:
+
+| Name                           | Type             | Default                              | Description                                                                                                                                                                                  |
+|--------------------------------|------------------|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| user_hash                      | String           | Not set                              | Links uploads to your catbox account. Leave unset for anonymous uploads                                                                                                                      |
+| timeout                        | Number (seconds) | 30                                   | Maximum time an upload can take, including connecting                                                                                                                                        |
+| connection_timeout             | Number (seconds) | 10                                   | Maximum time to establish a connection                                                                                                                                                       |
+| transcode                      | Table            | Not set                              | When set, the image is always re-encoded before being uploaded. When not set, the image is passed through unchanged                                                                          |
+| transcode.format               | String           | jpg                                  | "png", "jpg" (or "jpeg"), or "webp"                                                                                                                                                          |
+| transcode.quality              | Number (0-100)   | 80                                   | A fallback quality value for JPG and WebP. Ignored for PNG.                                                                                                                                  |
+| transcode.png                  | Table            | Not set                              |                                                                                                                                                                                              |
+| transcode.png.compression      | String           | fast                                 | "fast", "best", or "uncompressed"                                                                                                                                                            |
+| transcode.png.filter           | String           | adaptive                             | "nofilter", "sub", "up", "avg", "paeth", or "adaptive"                                                                                                                                       |
+| transcode.jpg                  | Table            | Not set                              |                                                                                                                                                                                              |
+| transcode.jpg.quality          | Number (0-100)   | transcode.quality                    | Overrides the global quality value for this format.                                                                                                                                          |
+| transcode.webp                 | Table            | Not set                              |                                                                                                                                                                                              |
+| transcode.webp.quality         | Number (0-100)   | transcode.quality                    | Overrides the global quality value for this format.                                                                                                                                          |
+| transcode.webp.lossless        | Boolean          | false                                | Enables lossless compression. When this is true, quality determines the effort put into compression. So, 100 = most effort, smaller file, slowest and 0 = least effort, larger file, fastest |
+| transcode.clamp                | Table            | Not set                              | When set, images are scaled down to fit the resolution below. Aspect ratio is preserved.                                                                                                     |
+| transcode.clamp.max_resolution | Inline table     | Required when transcode.clamp is set | { width = W, height = H } in pixels.                                                                                                                                                         |
+
+See the complete example below:
+
+```toml
+user_hash = "fa06e93babb0163ad24951b25"
+timeout = 30
+connection_timeout = 10
+
+[transcode]
+format = "png"
+quality = 80
+
+[transcode.png]
+compression = "best"
+filter = "adaptive"
+
+[transcode.jpg]
+quality = 50
+
+[transcode.webp]
+quality = 60
+lossless = true
+
+[transcode.clamp]
+max_resolution = { width = 1024, height = 1024 }
+```
+
+Lastly, you can use the sample [`config.toml`](config.toml) from this repository as a starting point.
+
+### Notes:
+
+- Configuration is optional, enabled only by the presence of a `config.toml` file. Without it, the image is passed
+  through unchanged
+- A malformed configuration will immediately fail
+- Unknown keys will immediately fail
+- JPG format discards transparency
+
+## License
+
+[MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE)
