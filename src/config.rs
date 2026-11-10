@@ -15,8 +15,8 @@ impl Default for Config {
         Self {
             transcode: None,
             user_hash: None,
-            timeout: Some(30),
-            connection_timeout: Some(10),
+            timeout: Some(10),
+            connection_timeout: Some(5),
         }
     }
 }
@@ -220,8 +220,8 @@ mod tests {
 
         assert_eq!(config.transcode, None);
         assert_eq!(config.user_hash, None);
-        assert_eq!(config.timeout, Some(30));
-        assert_eq!(config.connection_timeout, Some(10));
+        assert_eq!(config.timeout, Some(10));
+        assert_eq!(config.connection_timeout, Some(5));
     }
 
     #[test]

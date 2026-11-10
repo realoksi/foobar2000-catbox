@@ -76,8 +76,8 @@ See the following table:
 | Name                           | Type             | Default                              | Description                                                                                                                                                                                  |
 |--------------------------------|------------------|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | user_hash                      | String           | Not set                              | Links uploads to your catbox account. Leave unset for anonymous uploads                                                                                                                      |
-| timeout                        | Number (seconds) | 30                                   | Maximum time an upload can take, including connecting                                                                                                                                        |
-| connection_timeout             | Number (seconds) | 10                                   | Maximum time to establish a connection                                                                                                                                                       |
+| timeout                        | Number (seconds) | 10                                   | Maximum time an upload can take, including connecting                                                                                                                                        |
+| connection_timeout             | Number (seconds) | 5                                    | Maximum time to establish a connection                                                                                                                                                       |
 | transcode                      | Table            | Not set                              | When set, the image is always re-encoded before being uploaded. When not set, the image is passed through unchanged                                                                          |
 | transcode.format               | String           | jpg                                  | "png", "jpg" (or "jpeg"), or "webp"                                                                                                                                                          |
 | transcode.quality              | Number (0-100)   | 80                                   | A fallback quality value for JPG and WebP. Ignored for PNG                                                                                                                                   |
@@ -96,8 +96,8 @@ See the complete example below:
 
 ```toml
 user_hash = "fa06e93babb0163ad24951b25"
-timeout = 30
-connection_timeout = 10
+timeout = 10
+connection_timeout = 5
 
 [transcode]
 format = "png"
@@ -127,6 +127,10 @@ Lastly, you can use the sample [`config.toml`](config.toml) from this repository
 - A malformed configuration will immediately fail
 - Unknown keys will immediately fail
 - JPG format discards transparency
+- Adjust timeout if necessary. By default, [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich) gives
+  the
+  uploader [only 10 seconds](https://theqwertiest.github.io/foo_discord_rich/docs/features/advanced_users/art_upload/#technical-details)
+  to complete the upload
 
 ## License
 

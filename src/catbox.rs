@@ -32,8 +32,8 @@ impl Catbox {
     ) -> Result<Self> {
         let client = Client::builder()
             .user_agent(user_agent.unwrap_or(USER_AGENT))
-            .connect_timeout(Duration::from_secs(connect_timeout.unwrap_or(10)))
-            .timeout(Duration::from_secs(timeout.unwrap_or(30)))
+            .connect_timeout(Duration::from_secs(connect_timeout.unwrap_or(5)))
+            .timeout(Duration::from_secs(timeout.unwrap_or(10)))
             .build()?;
 
         Ok(Self { client, user_hash })
