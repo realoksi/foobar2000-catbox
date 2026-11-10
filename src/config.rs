@@ -161,8 +161,8 @@ mod tests {
         let config = toml::from_str::<Config>(
             r#"
         user_hash = "fa06e93babb0163ad24951b25"
-        timeout = 20
-        connection_timeout = 999
+        timeout = 120
+        connection_timeout = 60
 
         [transcode]
         format = "jpg"
@@ -186,8 +186,8 @@ mod tests {
         .unwrap();
 
         assert_eq!(config.user_hash, Some("fa06e93babb0163ad24951b25".into()));
-        assert_eq!(config.timeout, Some(20));
-        assert_eq!(config.connection_timeout, Some(999));
+        assert_eq!(config.timeout, Some(120));
+        assert_eq!(config.connection_timeout, Some(60));
 
         let transcode_config = config.transcode.unwrap();
         assert_eq!(transcode_config.format, Format::Jpg);
