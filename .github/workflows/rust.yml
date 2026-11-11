@@ -1,52 +1,47 @@
 name: Rust
 
 on:
-    push:
-        branches: ["development"]
+  push:
+    branches: [ "development", "production" ]
+  pull_request:
+
+permissions:
+  contents: read
 
 env:
-    CARGO_TERM_COLOR: always
-    CARGO_INCREMENTAL: 0
-    RUSTFLAGS: -Cinstrument-coverage
-    LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -Cinstrument-coverage
+  LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: 📋 Checkout from repository
-              uses: actions/checkout@v4
-            - name: 🚀 Setup Rust, grcov, and llvm-tools
-              run: |
-                rustup toolchain install stable --profile minimal
-                rustup component add llvm-tools-preview
-                sudo apt-get install -y lcov grcov
-            - name: 🗄️ Caching Rust dependencies
-              uses: Swatinem/rust-cache@v2
-            - name: 🛠️ Compile the application
-              run: |
-                cargo build
-                cargo test --no-fail-fast -- --nocapture
-            - name: 🗞️ Generate coverage report
-              run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
-            - name: 🔗 Upload report to codecov
-              uses: codecov/codecov-action@v5
-              with:
-                token: ${{ secrets.CODECOV_TOKEN }}
-                fail_ci_if_error: true
-                files: lcov.info
-#            # The following step fails. When I originally designed this workflow, catbox.moe allowed the connection,
-#            # but I figured after all this time they improved bot detection and have probably blocked gh runners. Fix
-#            # might be to mock the endpoint somehow. For now, it can be disabled.
-#            - name: 🧪 Run multiple samples
-#              run: |
-#                for sample in ./images/*.jpg; do
-#                  stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
-#                  if [[ $stdout =~ ^https:\/\/files.catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
-#                    echo "$stdout 🎉 Yes"
-#                  else
-#                    echo "$stdout 😥 No"
-#                    exit 1
-#                  echo "✨ All samples were successfully uploaded"
-#                  fi
-#                done
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📋 Checkout from repository
+        uses: actions/checkout@v4
+      - name: 🚀 Setup Rust, grcov, and llvm-tools
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup component add llvm-tools-preview clippy rustfmt
+          sudo apt-get install -y lcov grcov
+      - name: 🗄️ Caching Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: 🔎 Audit the code
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📝 Check formatting
+        run: cargo fmt --all -- --check
+      - name: 📎 Check clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: 🛠️ Test the application
+        run: cargo test --no-fail-fast -- --nocapture
+      - name: 🗞️ Generate coverage report
+        run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
+      - name: 🔗 Upload report to codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: lcov.info
