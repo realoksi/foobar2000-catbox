@@ -5,41 +5,68 @@ on:
     branches: [ "development", "production" ]
   pull_request:
 
-permissions:
-  contents: read
-
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
-  RUSTFLAGS: -Cinstrument-coverage
-  LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  audit:
+    name: Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
-      - name: 📋 Checkout from repository
-        uses: actions/checkout@v4
-      - name: 🚀 Setup Rust, grcov, and llvm-tools
-        run: |
-          rustup toolchain install stable --profile minimal
-          rustup component add llvm-tools-preview clippy rustfmt
-          sudo apt-get install -y lcov grcov
-      - name: 🗄️ Caching Rust dependencies
-        uses: Swatinem/rust-cache@v2
-      - name: 🔎 Audit the code
+      - name: checkout
+        uses: actions/checkout@v7.0.1
+      - name: audit
         uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: 📝 Check formatting
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7.0.1
+      - name: setup rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+      - name: check formatting
         run: cargo fmt --all -- --check
-      - name: 📎 Check clippy
+      - name: check clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: 🛠️ Test the application
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Cinstrument-coverage
+      LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
+      HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+    steps:
+      - name: setup rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - name: setup cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: grcov
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+      - name: test
         run: cargo test --no-fail-fast -- --nocapture
-      - name: 🗞️ Generate coverage report
+      - name: generate coverage report
+        if: env.HAS_CODECOV_TOKEN == 'true'
         run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
-      - name: 🔗 Upload report to codecov
+      - name: upload report
+        if: env.HAS_CODECOV_TOKEN == 'true'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
