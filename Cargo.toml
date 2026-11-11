@@ -42,7 +42,7 @@ default-features = false
 features = ["blocking", "native-tls", "multipart"]
 
 [dependencies.log]
-version = "0.4.34"
+version = "0.4.35"
 default-features = false
 
 [dependencies.env_logger]
