@@ -92,10 +92,10 @@ See the following table:
 | transcode.clamp                | Table            | Not set                              | When set, images are scaled down to fit the resolution below. Aspect ratio is preserved                                                                                                      |
 | transcode.clamp.max_resolution | Inline table     | Required when transcode.clamp is set | { width = W, height = H } in pixels                                                                                                                                                          |
 
-See the complete example below:
+See a more complete example below:
 
 ```toml
-user_hash = "fa06e93babb0163ad24951b25"
+user_hash = "fa06e93babb0163ad24951b25" # not a real hash
 timeout = 10
 connection_timeout = 5
 
@@ -115,7 +115,7 @@ quality = 60
 lossless = true
 
 [transcode.clamp]
-max_resolution = { width = 1024, height = 1024 }
+max_resolution = { width = 470, height = 470 }
 ```
 
 Lastly, you can use the sample [`config.toml`](config.toml) from this repository as a starting point.
