@@ -21,7 +21,7 @@ jobs:
       checks: write
     steps:
       - name: checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v4
       - name: audit
         uses: rustsec/audit-check@v2.0.0
         with:
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v4
       - name: setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -50,6 +50,8 @@ jobs:
       LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
       HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
       - name: setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
