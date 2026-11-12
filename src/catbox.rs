@@ -1,10 +1,11 @@
 use anyhow::{Result, bail};
+use image::EncodableLayout;
 use log::{debug, info};
-use reqwest::blocking::{
-    Client,
-    multipart::{Form, Part},
-};
 use std::time::Duration;
+use ureq::{
+    Agent,
+    unversioned::multipart::{Form, Part},
+};
 
 const CATBOX_URL: &str = "https://catbox.moe/user/api.php";
 const USER_AGENT: &str = concat!(
@@ -19,7 +20,7 @@ pub trait Service {
 
 #[derive(Debug)]
 pub struct Catbox {
-    client: Client,
+    agent: Agent,
     user_hash: Option<String>,
 }
 
@@ -30,13 +31,15 @@ impl Catbox {
         timeout: Option<u64>,
         connect_timeout: Option<u64>,
     ) -> Result<Self> {
-        let client = Client::builder()
-            .user_agent(user_agent.unwrap_or(USER_AGENT))
-            .connect_timeout(Duration::from_secs(connect_timeout.unwrap_or(5)))
-            .timeout(Duration::from_secs(timeout.unwrap_or(10)))
-            .build()?;
+        let config = Agent::config_builder()
+            .timeout_connect(Some(Duration::from_secs(connect_timeout.unwrap_or(5))))
+            .timeout_global(Some(Duration::from_secs(timeout.unwrap_or(10))))
+            .user_agent(user_agent.unwrap_or(USER_AGENT));
 
-        Ok(Self { client, user_hash })
+        Ok(Self {
+            agent: Agent::new_with_config(config.build()),
+            user_hash,
+        })
     }
 }
 
@@ -59,29 +62,26 @@ impl Service for Catbox {
             image_format, mime_type, ext
         );
 
-        let mut form = Form::new().text("reqtype", "fileupload");
-
-        form = form.part(
+        let mut form = Form::new().text("reqtype", "fileupload").part(
             "fileToUpload",
-            Part::bytes(data)
-                .file_name(format!("image.{}", ext))
+            Part::bytes(data.as_bytes())
+                .file_name(format!("image.{}", ext).as_str())
                 .mime_str(mime_type)?,
         );
 
         if let Some(user_hash) = &self.user_hash {
             debug!("adding user hash to form");
-            form = form.text("userhash", user_hash.to_string());
+            form = form.text("userhash", user_hash);
         }
 
         info!("uploading multipart form");
 
-        let response = self
-            .client
+        let mut response = self
+            .agent
             .post(url.unwrap_or(CATBOX_URL.to_string()))
-            .multipart(form)
-            .send()?;
+            .send(form)?;
         let status_code = response.status();
-        let body = response.text()?;
+        let body = response.body_mut().read_to_string()?;
 
         if !status_code.is_success() {
             bail!("Catbox error: {}, {}", status_code, body);

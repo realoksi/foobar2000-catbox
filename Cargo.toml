@@ -35,11 +35,10 @@ features = ["png", "jpeg"]
 [dependencies.webp]
 version = "0.3.1"
 
-# TODO: reqwest adds a lot of bloat to the final binary. need to swap with something that has fewer dependencies
-[dependencies.reqwest]
-version = "0.13.5"
+[dependencies.ureq]
+version = "3.5.1"
 default-features = false
-features = ["blocking", "native-tls", "multipart"]
+features = ["multipart", "rustls"]
 
 [dependencies.log]
 version = "0.4.35"
