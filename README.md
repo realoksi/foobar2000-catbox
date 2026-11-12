@@ -49,7 +49,7 @@ cargo build -r
 
 Find the executable at `target/release/foobar2000-catbox.exe`
 
-### Cross-compiling from Linux
+### Cross-compiling from Linux or macOS
 
 Add a Windows target with rustup.
 
@@ -57,7 +57,7 @@ Add a Windows target with rustup.
 rustup target add x86_64-pc-windows-gnu
 ```
 
-You will also need [mingw-w64](https://www.mingw-w64.org/). See their **Getting Started** section for your distribution.
+You will also need [mingw-w64](https://www.mingw-w64.org/downloads).
 
 Compile a release build with the Windows target specified.
 
