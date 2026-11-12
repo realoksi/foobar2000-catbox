@@ -1,49 +1,76 @@
 name: Rust
 
 on:
-    push:
-        branches: ["development"]
+  push:
+    branches: [ "development", "production" ]
+  pull_request:
 
 env:
-    CARGO_TERM_COLOR: always
-    CARGO_INCREMENTAL: 0
-    RUSTFLAGS: -Cinstrument-coverage
-    LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+permissions:
+  contents: read
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: 📋 Checkout from repository
-              uses: actions/checkout@v4
-            - name: 🚀 Setup Rust, grcov, and llvm-tools
-              run: |
-                rustup toolchain install stable --profile minimal
-                rustup component add llvm-tools-preview
-                sudo apt-get install -y lcov grcov
-            - name: 🗄️ Caching Rust dependencies
-              uses: Swatinem/rust-cache@v2
-            - name: 🛠️ Compile the application
-              run: |
-                cargo build
-                cargo test --no-fail-fast -- --nocapture
-            - name: 🗞️ Generate coverage report
-              run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
-            - name: 🔗 Upload report to codecov
-              uses: codecov/codecov-action@v5
-              with:
-                token: ${{ secrets.CODECOV_TOKEN }}
-                fail_ci_if_error: true
-                files: lcov.info
-            - name: 🧪 Run multiple samples
-              run: |
-                for sample in ./samples/*.jpg; do
-                  stdout=$(echo "$sample" | ./target/debug/foobar2000-catbox)
-                  if [[ $stdout =~ ^https:\/\/(files|litter).catbox.moe\/[A-Za-z0-9]*\.jpg$ ]]; then
-                    echo "$stdout 🎉 Yes"
-                  else
-                    echo "$stdout 😥 No"
-                    exit 1
-                  echo "✨ All samples were successfully uploaded"
-                  fi
-                done
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: audit
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+      - name: check formatting
+        run: cargo fmt --all -- --check
+      - name: check clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Cinstrument-coverage
+      LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
+      HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - name: setup cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: grcov
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+      - name: test
+        run: cargo test --no-fail-fast -- --nocapture
+      - name: generate coverage report
+        if: env.HAS_CODECOV_TOKEN == 'true'
+        run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
+      - name: upload report
+        if: env.HAS_CODECOV_TOKEN == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: lcov.info

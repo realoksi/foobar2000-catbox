@@ -1,0 +1,8 @@
+# config.toml
+
+[transcode]
+format = "jpg"
+quality = 80
+
+[transcode.clamp]
+max_resolution = { width = 500, height = 500 }

@@ -1,36 +1,54 @@
 [package]
 name = "foobar2000-catbox"
-version = "1.0.9"
-edition = "2021"
+version = "2.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/realoksi/foobar2000-catbox"
+rust-version = "1.88"
 
 [profile.release]
 strip = true
 lto = true
-codegen-units = 16
+opt-level = "z"
+panic = "abort"
+codegen-units = 1
 
-[dependencies.base64]
-version = "0.22.1"
+[dependencies.anyhow]
+version = "1.0.104"
+default-features = false
+
+[dependencies.toml]
+version = "1.1.8"
+default-features = false
+features = ["parse", "serde"]
 
 [dependencies.serde]
-version = "1.0.219"
+version = "1.0.229"
 default-features = false
 features = ["derive"]
 
-[dependencies.serde_yml]
-version = "0.0.12"
-
-[dependencies.strum]
-version = "0.27.1"
-default-features = false
-features = ["strum_macros"]
-
-[dependencies.strum_macros]
-version = "0.27.1"
-
-[dependencies.curl]
-version = "0.4.47"
-
 [dependencies.image]
-version = "0.25.6"
+version = "0.25.10"
 default-features = false
-features = ["png", "jpeg", "webp"]
+features = ["png", "jpeg"]
+
+[dependencies.webp]
+version = "0.3.1"
+default-features = false
+
+[dependencies.ureq]
+version = "3.5.1"
+default-features = false
+features = ["multipart", "native-tls"]
+
+[dependencies.log]
+version = "0.4.35"
+default-features = false
+
+[dependencies.env_logger]
+version = "0.11.11"
+default-features = false
+
+[dev-dependencies.mockito]
+version = "1.7.2"
+default-features = false

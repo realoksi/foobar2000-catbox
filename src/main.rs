@@ -1,124 +1,194 @@
+mod catbox;
+mod config;
+mod encode;
+
+use crate::catbox::{Catbox, Service};
+use crate::config::{ClampTranscodeConfig, Config, TranscodeConfig};
+use crate::encode::encode_image;
+
+use anyhow::{Context, Result};
+use image::{DynamicImage, guess_format, imageops::FilterType};
 use std::{
-    env, fs,
-    io::{self, BufRead, Cursor},
-    path::Path,
-    process::exit,
+    env, fs, io,
+    io::{BufRead, stdin},
+    path::{Path, PathBuf},
 };
 
-use consumer::{Catbox, Consumer, Litterbox};
-use image::codecs::{jpeg::JpegEncoder, png::PngEncoder, webp::WebPEncoder};
-use settings::{EncodeFormat, Error, Settings};
+fn read_path_line(input: impl BufRead) -> Result<PathBuf> {
+    let input = input.lines().next().with_context(|| "No input")??;
+    Ok(input.trim().into())
+}
 
-mod consumer;
-mod settings;
+fn load_file(path: &Path) -> Result<Vec<u8>> {
+    fs::read(path).with_context(|| format!("Failed to read file: {:?}", path))
+}
 
-fn main() {
-    let settings_path: &Path = &env::current_exe()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("settings.yml");
+fn clamp(img: DynamicImage, clamp_config: &ClampTranscodeConfig) -> DynamicImage {
+    let (max_width, max_height) = (
+        clamp_config.max_resolution.width,
+        clamp_config.max_resolution.height,
+    );
 
-    let settings = Settings::from_str(&fs::read_to_string(settings_path).unwrap_or_default())
-        .unwrap_or(Settings::new());
-
-    if let Err(e) = settings.validate() {
-        match e {
-            Error::EncodeFormatQualityError(_) => {
-                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
-                exit(1);
-            }
-            Error::ResizeMaxResolutionZeroError(_) => {
-                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
-                exit(2);
-            }
-            Error::ResizeMaxResolutionPowerError(_) => {
-                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
-                exit(3);
-            }
-            Error::UserHashError(_) => {
-                eprintln!("\x1b[38;2;255;18;73m{}\x1b[0m", e);
-                exit(4);
-            }
-        }
-    }
-
-    let input: String = io::stdin()
-        .lock()
-        .lines()
-        .next()
-        .unwrap()
-        .unwrap()
-        .trim()
-        .to_string();
-
-    let file_path: &Path = Path::new(&input);
-
-    if !file_path.exists() {
-        eprintln!("{:?} doesn't exist.", file_path.as_os_str());
-        exit(4);
-    }
-
-    let file_buffer: Vec<u8> = std::fs::read(&file_path).unwrap();
-
-    let image_buffer = image::load_from_memory(&file_buffer).unwrap_or_else(|_| {
-        eprintln!("Failed to load image from memory");
-        exit(5);
-    });
-
-    let max_width = settings.resize_max_resolution[0];
-    let max_height = settings.resize_max_resolution[1];
-
-    let next_buffer = if settings.enable_resize
-        && (image_buffer.width() > max_width || image_buffer.height() > max_height)
-    {
-        image_buffer.resize(max_width, max_height, image::imageops::FilterType::Nearest)
+    if img.width() > max_width || img.height() > max_height {
+        img.resize(max_width, max_height, FilterType::CatmullRom)
     } else {
-        image_buffer
-    };
+        img
+    }
+}
 
-    let mut cursor = Cursor::new(Vec::<u8>::new());
+fn transcode(buf: &[u8], transcode_config: &TranscodeConfig) -> Result<Vec<u8>> {
+    let format = guess_format(buf)?;
+    let mut img = image::load_from_memory_with_format(buf, format)?;
 
-    if settings.enable_encode {
-        match settings.encode_format {
-            EncodeFormat::JPG => next_buffer
-                .write_with_encoder(JpegEncoder::new_with_quality(
-                    &mut cursor,
-                    settings.encode_format_quality,
-                ))
-                .unwrap(),
-            EncodeFormat::PNG => next_buffer
-                .write_with_encoder(PngEncoder::new(&mut cursor))
-                .unwrap(),
-            EncodeFormat::WEBP => next_buffer
-                .write_with_encoder(WebPEncoder::new_lossless(&mut cursor))
-                .unwrap(),
-        }
-    } else {
-        next_buffer
-            .write_to(&mut cursor, image::guess_format(&file_buffer).unwrap())
-            .unwrap();
+    if let Some(clamp_config) = transcode_config.clamp {
+        img = clamp(img, &clamp_config);
     }
 
-    let consumer: Box<dyn Consumer> = match settings.enable_litterbox {
-        true => Box::new(Litterbox::new(
-            settings.litterbox_expire_time.to_string(),
-            Some(settings.user_agent),
-            Some(settings.user_hash),
-        )),
-        false => Box::new(Catbox::new(
-            Some(settings.user_agent),
-            Some(settings.user_hash),
-        )),
+    encode_image(&img, transcode_config)
+}
+
+fn get_config(path: PathBuf) -> Result<Config> {
+    match fs::read_to_string(&path) {
+        Ok(buf) => {
+            toml::from_str(&buf).with_context(|| format!("Couldn't parse config file {:?}", path))
+        }
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(Default::default()),
+        Err(e) => Err(e).with_context(|| format!("Couldn't read config file {:?}", path)),
+    }
+}
+
+fn run(input: impl BufRead, config: Config, service: impl Service) -> Result<String> {
+    let path = read_path_line(input)?;
+    let file_buf = load_file(&path)?;
+
+    let payload = match config.transcode {
+        Some(transcode_config) => transcode(&file_buf, &transcode_config)?,
+        None => file_buf,
     };
 
-    match consumer.upload_image(cursor.into_inner()) {
-        Ok(response) => {
-            println!("{}", response);
-        }
-        Err(e) => {
-            eprintln!("{}", e);
-            exit(6)
-        }
+    service.upload_image(None, payload)
+}
+
+fn main() -> Result<()> {
+    env_logger::init();
+
+    let config_path = env::current_exe()?.parent().unwrap().join("config.toml");
+    let config = get_config(config_path)?;
+    let service = Catbox::new(
+        None,
+        config.user_hash.clone(),
+        config.timeout,
+        config.connection_timeout,
+    )?;
+    let response = run(stdin().lock(), config, service)?;
+
+    println!("{}", response);
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{Format, JpgTranscodeConfig, MaxResolution};
+    use image::{
+        ColorType,
+        codecs::png::{CompressionType, PngEncoder},
     };
+    use std::{
+        io::{BufReader, Cursor},
+        str::FromStr,
+    };
+
+    const CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
+
+    fn temp_config_path() -> Result<PathBuf> {
+        PathBuf::from_str(format!("{}/config.toml", CARGO_MANIFEST_DIR).as_str())
+            .with_context(|| "Bad path")
+    }
+
+    /// creates a blank png
+    fn temp_image_buf(w: u32, h: u32, color_type: ColorType) -> Vec<u8> {
+        let img = DynamicImage::new(w, h, color_type);
+
+        let mut cursor = Cursor::new(Vec::new());
+
+        img.write_with_encoder(PngEncoder::new_with_quality(
+            &mut cursor,
+            CompressionType::Best,
+            image::codecs::png::FilterType::Adaptive,
+        ))
+        .unwrap();
+
+        cursor.into_inner()
+    }
+
+    #[test]
+    fn test_read_path_line() {
+        let input = BufReader::new("    /my/path/line/image.jpg    \n".as_bytes());
+
+        let path_line = read_path_line(input).unwrap();
+
+        assert_eq!(path_line.as_os_str(), "/my/path/line/image.jpg");
+    }
+
+    #[test]
+    fn test_load_file() {
+        load_file(&PathBuf::from(format!(
+            "{}/config.toml",
+            CARGO_MANIFEST_DIR
+        )))
+        .unwrap();
+    }
+
+    #[test]
+    fn test_clamp() {
+        let rgb8 = DynamicImage::new(32, 32, ColorType::Rgb8);
+        let clamp_config = ClampTranscodeConfig {
+            max_resolution: MaxResolution {
+                width: 16,
+                height: 16,
+            },
+        };
+
+        let result_1 = clamp(rgb8, &clamp_config);
+
+        assert_eq!(result_1.width(), 16);
+        assert_eq!(result_1.height(), 16);
+
+        let result_2 = clamp(result_1, &clamp_config);
+
+        assert_eq!(result_2.width(), 16);
+        assert_eq!(result_2.height(), 16);
+    }
+
+    #[test]
+    fn test_transcode() {
+        let buf = temp_image_buf(32, 32, ColorType::Rgb8);
+
+        let transcode_config = TranscodeConfig {
+            format: Format::Jpg,
+            quality: 80,
+            png: None,
+            jpg: Some(JpgTranscodeConfig {
+                ..Default::default()
+            }),
+            webp: None,
+            clamp: Some(ClampTranscodeConfig {
+                max_resolution: MaxResolution {
+                    width: 16,
+                    height: 16,
+                },
+            }),
+        };
+
+        transcode(&buf, &transcode_config).unwrap();
+    }
+
+    #[test]
+    fn test_get_config() {
+        let good_config_path = temp_config_path().unwrap();
+
+        get_config(good_config_path).unwrap();
+    }
 }

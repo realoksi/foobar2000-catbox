@@ -1,8 +1,12 @@
 target/
 *.profraw
 *.info
+.DS_Store
 
 # Visual Studio Code
 .vscode/
 .history/
 *.code-workspace
+
+# RustRover
+.idea/
