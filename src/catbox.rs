@@ -1,5 +1,4 @@
 use anyhow::{Result, bail};
-use image::EncodableLayout;
 use log::{debug, info};
 use std::time::Duration;
 use ureq::{
@@ -64,7 +63,7 @@ impl Service for Catbox {
 
         let mut form = Form::new().text("reqtype", "fileupload").part(
             "fileToUpload",
-            Part::bytes(data.as_bytes())
+            Part::bytes(&data)
                 .file_name(format!("image.{}", ext).as_str())
                 .mime_str(mime_type)?,
         );
