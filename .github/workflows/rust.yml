@@ -66,7 +66,7 @@ jobs:
         run: cargo test --no-fail-fast -- --nocapture
       - name: generate coverage report
         if: env.HAS_CODECOV_TOKEN == 'true'
-        run: grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
+        run: grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore './*' --ignore "/*" -o lcov.info
       - name: upload report
         if: env.HAS_CODECOV_TOKEN == 'true'
         uses: codecov/codecov-action@v5
