@@ -1,6 +1,7 @@
 use anyhow::{Result, bail};
 use log::{debug, info};
 use std::time::Duration;
+use ureq::tls::{TlsConfig, TlsProvider};
 use ureq::{
     Agent,
     unversioned::multipart::{Form, Part},
@@ -33,7 +34,12 @@ impl Catbox {
         let config = Agent::config_builder()
             .timeout_connect(Some(Duration::from_secs(connect_timeout.unwrap_or(5))))
             .timeout_global(Some(Duration::from_secs(timeout.unwrap_or(10))))
-            .user_agent(user_agent.unwrap_or(USER_AGENT));
+            .user_agent(user_agent.unwrap_or(USER_AGENT))
+            .tls_config(
+                TlsConfig::builder()
+                    .provider(TlsProvider::NativeTls)
+                    .build(),
+            );
 
         Ok(Self {
             agent: Agent::new_with_config(config.build()),
